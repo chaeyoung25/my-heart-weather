@@ -12,7 +12,8 @@ const db = firebase.firestore();
 
 // 관리자 모드 변수
 let isAdminMode = false;
-const ADMIN_CODE = "admin"; // 관리자 모드 켜는 비밀번호
+// 👇 [변경됨] 관리자 비밀번호
+const ADMIN_CODE = "0929"; 
 
 // 요소들
 const board = document.getElementById('board-container');
