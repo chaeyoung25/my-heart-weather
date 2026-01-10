@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
@@ -26,7 +25,7 @@
             </button>
 
             <p style="margin-top: 20px; font-size: 0.8rem; color: #999; cursor: pointer; text-decoration: underline;" id="btn-force-logout">
-                혹시 반응이 없나요? 여기를 눌러 초기화하세요.
+                초기화 (반응이 없으면 클릭)
             </p>
         </div>
     </section>
@@ -75,24 +74,34 @@
                 <h2>오늘의 마음 기록</h2>
                 <button class="close-btn" id="close-write">&times;</button>
             </div>
+            
             <div class="emotion-grid">
                 <button class="emo-btn selected" data-val="☀️">☀️<br>맑음</button>
                 <button class="emo-btn" data-val="☁️">☁️<br>흐림</button>
                 <button class="emo-btn" data-val="☔">☔<br>우울</button>
                 <button class="emo-btn" data-val="⛈️">⛈️<br>폭풍</button>
+                
                 <button class="emo-btn" data-val="🥰">🥰<br>행복</button>
                 <button class="emo-btn" data-val="🥳">🥳<br>신남</button>
                 <button class="emo-btn" data-val="😌">😌<br>편안</button>
                 <button class="emo-btn" data-val="🧸">🧸<br>포근</button>
+                
+                <button class="emo-btn" data-val="😆">😆<br>즐거움</button>
+                <button class="emo-btn" data-val="😁">😁<br>기쁨</button>
+                <button class="emo-btn" data-val="🤩">🤩<br>흥분</button>
+                <button class="emo-btn" data-val="💖">💖<br>충만</button>
+
                 <button class="emo-btn" data-val="🥱">🥱<br>피곤</button>
                 <button class="emo-btn" data-val="🤕">🤕<br>아픔</button>
                 <button class="emo-btn" data-val="🤯">🤯<br>복잡</button>
                 <button class="emo-btn" data-val="😰">😰<br>걱정</button>
+
                 <button class="emo-btn" data-val="😤">😤<br>답답</button>
                 <button class="emo-btn" data-val="🔥">🔥<br>열정</button>
                 <button class="emo-btn" data-val="✨">✨<br>설렘</button>
                 <button class="emo-btn" data-val="☃️">☃️<br>외로움</button>
             </div>
+
             <textarea id="post-text" placeholder="마음속 이야기를 적어주세요..." rows="4"></textarea>
             <button id="submit-post" class="btn-full">기록하기</button>
         </div>
