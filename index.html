@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
     <div class="background-blob blob-1"></div>
@@ -28,10 +29,8 @@
         <div class="glass-card auth-card">
             <h2>가입 신청 📝</h2>
             <p class="subtitle">관리자 승인 후 이용 가능합니다.<br>본인의 실명과 연락처를 입력해주세요.</p>
-            
             <input type="text" id="reg-nick" class="input-field" placeholder="이름 (실명)">
             <input type="text" id="reg-phone" class="input-field" placeholder="연락처 (예: 010-1234-5678)">
-            
             <button id="btn-save-info" class="btn-full btn-green">가입 신청하기</button>
         </div>
     </section>
@@ -39,8 +38,8 @@
     <section id="waiting-screen" class="auth-container hidden">
         <div class="glass-card auth-card">
             <h2>⏳ 승인 대기 중</h2>
-            <p class="subtitle" style="margin-top:10px;">관리자가 확인 후 승인해드려요.<br>잠시만 기다려주세요.</p>
-            <button id="btn-check-status" class="btn-full">승인되었는지 확인하기 (새로고침)</button>
+            <p class="subtitle" style="margin-top:10px;">관리자에게 알림 메일을 보냈습니다.<br>승인되면 다시 접속해주세요.</p>
+            <button id="btn-check-status" class="btn-full">새로고침</button>
         </div>
     </section>
 
@@ -69,56 +68,33 @@
                 <h2>오늘의 마음 기록</h2>
                 <button class="close-btn" id="close-write">&times;</button>
             </div>
+            
             <div class="emotion-grid">
                 <button class="emo-btn selected" data-val="☀️">☀️<br>맑음</button>
                 <button class="emo-btn" data-val="☁️">☁️<br>흐림</button>
                 <button class="emo-btn" data-val="☔">☔<br>우울</button>
-                <button class="emo-btn" data-val="⚡">⚡<br>화남</button>
-                <button class="emo-btn" data-val="☃️">☃️<br>외로움</button>
+                <button class="emo-btn" data-val="⛈️">⛈️<br>폭풍</button>
+                
                 <button class="emo-btn" data-val="🥰">🥰<br>행복</button>
                 <button class="emo-btn" data-val="🥳">🥳<br>신남</button>
+                <button class="emo-btn" data-val="😌">😌<br>편안</button>
+                <button class="emo-btn" data-val="🧸">🧸<br>포근</button>
+                
+                <button class="emo-btn" data-val="🥱">🥱<br>피곤</button>
+                <button class="emo-btn" data-val="🤕">🤕<br>아픔</button>
+                <button class="emo-btn" data-val="🤯">🤯<br>복잡</button>
                 <button class="emo-btn" data-val="😰">😰<br>걱정</button>
+
+                <button class="emo-btn" data-val="😤">😤<br>답답</button>
+                <button class="emo-btn" data-val="🔥">🔥<br>열정</button>
+                <button class="emo-btn" data-val="✨">✨<br>설렘</button>
+                <button class="emo-btn" data-val="☃️">☃️<br>외로움</button>
             </div>
+
             <textarea id="post-text" placeholder="마음속 이야기를 적어주세요..." rows="4"></textarea>
             <button id="submit-post" class="btn-full">기록하기</button>
         </div>
     </div>
 
     <div id="view-modal" class="modal hidden">
-        <div class="modal-content glass-card">
-            <div class="modal-header">
-                <span id="view-emotion" class="detail-emo">☀️</span>
-                <button id="delete-btn" class="icon-btn delete-icon hidden"><i class="fas fa-trash"></i> 삭제</button>
-                <button class="close-btn" id="close-view">&times;</button>
-            </div>
-            <div id="view-author" style="font-size:0.9rem; color:#666; margin-bottom:5px;">작성자: -</div>
-            <p id="view-text" class="detail-text"></p>
-            <div class="divider"></div>
-            <div id="comments-list" class="comments-area"></div>
-            <div class="comment-input-area">
-                <input type="text" id="comment-input" placeholder="댓글을 남겨주세요" style="flex:1;">
-                <button id="submit-comment" class="icon-btn-send"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <div id="admin-modal" class="modal hidden">
-        <div class="modal-content glass-card">
-            <div class="modal-header">
-                <h2>👑 회원 승인 관리</h2>
-                <button class="close-btn" id="close-admin">&times;</button>
-            </div>
-            <div id="user-list" class="comments-area" style="max-height: 400px;">
-                <p style="text-align:center; color:#999;">승인 대기 중인 회원이 없습니다.</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast" class="toast hidden">알림 메시지</div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script> 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>
+        <div class="
