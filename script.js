@@ -11,15 +11,14 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
-const googleProvider = new firebase.auth.GoogleAuthProvider(); // 구글 로그인 도구
+const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-// 전역 변수
+// 변수들
 let currentUser = null;
 let currentUserProfile = null;
 
-// 화면 요소
 const authScreen = document.getElementById('auth-screen');
-const signupScreen = document.getElementById('signup-screen'); // 추가 정보 입력창
+const signupScreen = document.getElementById('signup-screen');
 const appScreen = document.getElementById('app-screen');
 
 // ==========================================
@@ -28,24 +27,31 @@ const appScreen = document.getElementById('app-screen');
 
 // [구글 로그인 버튼 클릭]
 document.getElementById('btn-google').addEventListener('click', () => {
+    // 팝업으로 로그인 시도
     auth.signInWithPopup(googleProvider)
         .catch((error) => {
-            alert("로그인 실패: " + error.message);
+            console.error(error); // 에러 확인용
+            // 에러 메시지가 'unauthorized domain'이면 1단계(도메인 등록)를 안 한 것입니다.
+            if(error.code === 'auth/unauthorized-domain') {
+                alert("로그인 실패: 파이어베이스 콘솔에서 '승인된 도메인'을 추가해주세요! (1단계 참고)");
+            } else {
+                alert("로그인 실패: " + error.message);
+            }
         });
 });
 
-// [로그인 상태 변경 감지]
+// [로그인 상태 감지]
 auth.onAuthStateChanged((user) => {
     if (user) {
         currentUser = user;
-        // DB에 저장된 사용자 정보(별칭 등)가 있는지 확인
+        // DB에 저장된 사용자 정보(별칭) 확인
         db.collection('users').doc(user.uid).get().then((doc) => {
             if (doc.exists) {
-                // 1. 이미 가입된 사용자 -> 바로 앱으로 이동
+                // 이미 별칭이 있는 사용자 -> 앱으로 이동
                 currentUserProfile = doc.data();
                 enterApp();
             } else {
-                // 2. 처음 온 사용자 -> 추가 정보(별칭) 입력 화면으로 이동
+                // 처음 온 사용자 -> 별칭 입력 화면으로
                 authScreen.classList.add('hidden');
                 signupScreen.classList.remove('hidden');
             }
@@ -60,29 +66,26 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// [처음 가입 시 추가 정보 저장]
+// [추가 정보 저장 (가입 완료)]
 document.getElementById('btn-save-info').addEventListener('click', () => {
     const nick = document.getElementById('reg-nick').value.trim();
     const phone = document.getElementById('reg-phone').value.trim();
 
     if (!nick) return alert("별칭을 입력해주세요!");
 
-    // DB에 저장
     db.collection('users').doc(currentUser.uid).set({
-        realName: currentUser.displayName, // 구글 이름
-        email: currentUser.email,          // 구글 이메일
-        nickname: nick,                    // 입력한 별칭
-        phone: phone,                      // 입력한 번호
+        realName: currentUser.displayName, 
+        email: currentUser.email,          
+        nickname: nick,                    
+        phone: phone,                      
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
-        // 저장 완료 후 앱 진입
         currentUserProfile = { nickname: nick, phone: phone };
         signupScreen.classList.add('hidden');
         enterApp();
     });
 });
 
-// 앱 화면 진입 처리
 function enterApp() {
     document.getElementById('current-user-nick').textContent = `${currentUserProfile.nickname}님`;
     appScreen.classList.remove('hidden');
@@ -97,7 +100,7 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 
 
 // ==========================================
-// 2. 앱 기능 (글쓰기, 댓글, 삭제)
+// 2. 앱 기능
 // ==========================================
 const board = document.getElementById('board-container');
 const fab = document.getElementById('fab-write');
@@ -109,7 +112,7 @@ let currentDocData = null;
 const todayMidnight = new Date();
 todayMidnight.setHours(0, 0, 0, 0);
 
-// 모달 열기/닫기
+// 모달 열기
 fab.addEventListener('click', () => {
     writeModal.classList.remove('hidden');
     document.getElementById('post-text').value = '';
@@ -129,7 +132,7 @@ document.querySelectorAll('.emo-btn').forEach(btn => {
     });
 });
 
-// [글 쓰기] - 별칭 자동 입력
+// [글 쓰기]
 document.getElementById('submit-post').addEventListener('click', () => {
     const text = document.getElementById('post-text').value.trim();
     if(!text) return alert("내용을 입력해주세요.");
@@ -137,8 +140,8 @@ document.getElementById('submit-post').addEventListener('click', () => {
     db.collection('posts').add({
         emotion: selectedEmo,
         text: text,
-        author: currentUserProfile.nickname, // 별칭 사용
-        authorId: currentUser.uid,           // ID 저장
+        author: currentUserProfile.nickname,
+        authorId: currentUser.uid,
         date: firebase.firestore.FieldValue.serverTimestamp(),
         colorIdx: Math.floor(Math.random() * 5)
     }).then(() => {
@@ -182,8 +185,8 @@ function openDetail(id, data) {
     document.getElementById('view-text').textContent = data.text;
     document.getElementById('view-author').textContent = `작성자: ${data.author}`;
     
-    // 삭제 버튼 표시: 내 글이거나 관리자('admin')일 때
     const deleteBtn = document.getElementById('delete-btn');
+    // 내 글이거나 관리자('admin')일 때만 삭제 버튼 보임
     if (data.authorId === currentUser.uid || currentUserProfile.nickname === 'admin') {
         deleteBtn.classList.remove('hidden');
     } else {

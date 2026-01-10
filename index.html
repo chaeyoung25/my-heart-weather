@@ -6,7 +6,7 @@
     <title>마음 날씨 체크인</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="background-blob blob-1"></div>
@@ -16,18 +16,19 @@
     <section id="auth-screen" class="auth-container">
         <div class="glass-card auth-card">
             <h1 class="logo-text"><i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨</h1>
-            <p style="margin-bottom: 30px; color:#666;">오늘 당신의 마음은 어떤가요?</p>
+            <p class="subtitle">오늘 당신의 마음은 어떤가요?</p>
             
             <button id="btn-google" class="btn-google">
-                <i class="fab fa-google"></i> Google 계정으로 시작하기
+                <i class="fab fa-google"></i>
+                <span>Google 계정으로 시작하기</span>
             </button>
         </div>
     </section>
 
     <section id="signup-screen" class="auth-container hidden">
         <div class="glass-card auth-card">
-            <h2>거의 다 왔어요!</h2>
-            <p style="margin-bottom: 20px; font-size:0.9rem;">앱에서 사용할 멋진 별명을 지어주세요.</p>
+            <h2>반가워요! 👋</h2>
+            <p class="subtitle">앱에서 사용할 멋진 별명을 지어주세요.</p>
             
             <input type="text" id="reg-nick" class="input-field" placeholder="별칭 (예: 행복한 구름)">
             <input type="text" id="reg-phone" class="input-field" placeholder="연락처 (선택사항)">
@@ -40,7 +41,7 @@
         <header class="glass-header">
             <div class="logo"><i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨</div>
             <div class="user-info">
-                <span id="current-user-nick">별칭님</span>
+                <span id="current-user-nick">사용자님</span>
                 <button id="btn-logout" class="icon-btn" title="로그아웃"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </header>
@@ -85,7 +86,7 @@
             <div class="divider"></div>
             <div id="comments-list" class="comments-area"></div>
             <div class="comment-input-area">
-                <input type="text" id="comment-input" placeholder="따뜻한 댓글을 남겨주세요" style="flex:1;">
+                <input type="text" id="comment-input" placeholder="댓글을 남겨주세요" style="flex:1;">
                 <button id="submit-comment" class="icon-btn-send"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
