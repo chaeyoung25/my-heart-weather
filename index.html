@@ -13,15 +13,44 @@
     <div class="background-blob blob-2"></div>
     <div class="background-blob blob-3"></div>
 
-    <header class="glass-header">
-        <div class="logo"><i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨</div>
-    </header>
+    <section id="auth-screen" class="auth-container">
+        <div class="glass-card auth-card">
+            <h1 class="logo-text"><i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨</h1>
+            <p style="margin-bottom: 30px; color:#666;">오늘 당신의 마음은 어떤가요?</p>
+            
+            <button id="btn-google" class="btn-google">
+                <i class="fab fa-google"></i> Google 계정으로 시작하기
+            </button>
+        </div>
+    </section>
 
-    <main id="board-container">
-        <div class="loading-msg">마음들을 불러오고 있어요...<br>(잠시만 기다려주세요)</div>
-    </main>
+    <section id="signup-screen" class="auth-container hidden">
+        <div class="glass-card auth-card">
+            <h2>거의 다 왔어요!</h2>
+            <p style="margin-bottom: 20px; font-size:0.9rem;">앱에서 사용할 멋진 별명을 지어주세요.</p>
+            
+            <input type="text" id="reg-nick" class="input-field" placeholder="별칭 (예: 행복한 구름)">
+            <input type="text" id="reg-phone" class="input-field" placeholder="연락처 (선택사항)">
+            
+            <button id="btn-save-info" class="btn-full btn-green">입장하기</button>
+        </div>
+    </section>
 
-    <button id="fab-write" class="fab"><i class="fas fa-pen"></i></button>
+    <div id="app-screen" class="hidden">
+        <header class="glass-header">
+            <div class="logo"><i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨</div>
+            <div class="user-info">
+                <span id="current-user-nick">별칭님</span>
+                <button id="btn-logout" class="icon-btn" title="로그아웃"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </header>
+
+        <main id="board-container">
+            <div class="loading-msg">마음들을 불러오고 있어요...</div>
+        </main>
+
+        <button id="fab-write" class="fab"><i class="fas fa-pen"></i></button>
+    </div>
 
     <div id="write-modal" class="modal hidden">
         <div class="modal-content glass-card">
@@ -29,7 +58,6 @@
                 <h2>오늘의 마음 기록</h2>
                 <button class="close-btn" id="close-write">&times;</button>
             </div>
-            
             <div class="emotion-grid">
                 <button class="emo-btn selected" data-val="☀️">☀️<br>맑음</button>
                 <button class="emo-btn" data-val="☁️">☁️<br>흐림</button>
@@ -40,13 +68,7 @@
                 <button class="emo-btn" data-val="🥳">🥳<br>신남</button>
                 <button class="emo-btn" data-val="😰">😰<br>걱정</button>
             </div>
-
-            <input type="text" id="writer-name" class="input-field" placeholder="작성자 이름 (예: 김철수)">
-            
             <textarea id="post-text" placeholder="마음속 이야기를 적어주세요..." rows="4"></textarea>
-            
-            <input type="password" id="post-pw" class="input-field" placeholder="비밀번호 4자리 (삭제할 때 필요)" maxlength="4">
-            
             <button id="submit-post" class="btn-full">기록하기</button>
         </div>
     </div>
@@ -55,19 +77,14 @@
         <div class="modal-content glass-card">
             <div class="modal-header">
                 <span id="view-emotion" class="detail-emo">☀️</span>
-                <button id="delete-btn" class="icon-btn delete-icon"><i class="fas fa-trash"></i> 삭제</button>
+                <button id="delete-btn" class="icon-btn delete-icon hidden"><i class="fas fa-trash"></i> 삭제</button>
                 <button class="close-btn" id="close-view">&times;</button>
             </div>
-            
             <div id="view-author" style="font-size:0.9rem; color:#666; margin-bottom:5px;">작성자: -</div>
             <p id="view-text" class="detail-text"></p>
-            
             <div class="divider"></div>
-            
             <div id="comments-list" class="comments-area"></div>
-            
             <div class="comment-input-area">
-                <input type="text" id="comment-writer" placeholder="이름" style="width: 80px;">
                 <input type="text" id="comment-input" placeholder="따뜻한 댓글을 남겨주세요" style="flex:1;">
                 <button id="submit-comment" class="icon-btn-send"><i class="fas fa-paper-plane"></i></button>
             </div>
@@ -77,6 +94,7 @@
     <div id="toast" class="toast hidden">알림 메시지</div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script> 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="script.js"></script>
 </body>

@@ -1,5 +1,5 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans KR', sans-serif; }
-body { background-color: #f4f7f6; min-height: 100vh; padding-top: 70px; overflow-x: hidden; }
+body { background-color: #f4f7f6; min-height: 100vh; overflow-x: hidden; }
 
 /* 배경 */
 .background-blob { position: absolute; border-radius: 50%; filter: blur(60px); z-index: -1; opacity: 0.6; }
@@ -7,16 +7,35 @@ body { background-color: #f4f7f6; min-height: 100vh; padding-top: 70px; overflow
 .blob-2 { bottom: -50px; right: -50px; width: 300px; height: 300px; background: #a18cd1; }
 .blob-3 { top: 40%; left: 30%; width: 200px; height: 200px; background: #fad0c4; }
 
-/* 헤더 */
+/* 로그인 화면 */
+.auth-container { display: flex; justify-content: center; align-items: center; height: 100vh; padding: 20px; }
+.auth-card { width: 100%; max-width: 400px; text-align: center; }
+.logo-text { font-family: 'Gaegu', cursive; font-size: 2rem; margin-bottom: 10px; color: #333; }
+
+/* 구글 버튼 스타일 */
+.btn-google {
+    width: 100%; padding: 15px; border: none; border-radius: 10px;
+    background: white; color: #333; font-weight: bold; font-size: 1rem;
+    cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: transform 0.2s;
+}
+.btn-google:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
+.btn-google i { color: #ea4335; font-size: 1.2rem; }
+
+/* 메인 화면 */
 .glass-header {
     position: fixed; top: 0; width: 100%; height: 60px;
     background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-    display: flex; justify-content: center; align-items: center;
-    font-size: 1.2rem; font-weight: bold; color: #333; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 20px; color: #333; z-index: 100;
 }
+.logo { font-size: 1.2rem; font-weight: bold; }
+.user-info { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
 
-/* 보드 */
+/* 앱 레이아웃 */
+#app-screen { padding-top: 70px; min-height: 100vh; }
 #board-container {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px; padding: 20px; max-width: 800px; margin: 0 auto;
@@ -32,7 +51,7 @@ body { background-color: #f4f7f6; min-height: 100vh; padding-top: 70px; overflow
 }
 .post-it:hover { transform: translateY(-5px); }
 
-/* 색상 */
+/* 색상 및 텍스트 */
 .color-0 { background: #fff4bd; color: #5a4a10; } 
 .color-1 { background: #d4f0f0; color: #1e4a4a; } 
 .color-2 { background: #ffd6e7; color: #5a1e3a; } 
@@ -43,48 +62,36 @@ body { background-color: #f4f7f6; min-height: 100vh; padding-top: 70px; overflow
 .post-text { font-size: 0.9rem; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-family: 'Gaegu', cursive; margin-bottom: 10px;}
 .post-author { font-size: 0.8rem; font-weight: bold; opacity: 0.8; text-align: right; }
 
-/* 버튼 및 모달 */
-.fab {
-    position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
-    border-radius: 50%; background: #333; color: white; border: none;
-    font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 90;
+/* 공통 UI */
+.glass-card {
+    background: #fff; padding: 25px; border-radius: 20px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5);
 }
 .modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.4); backdrop-filter: blur(3px);
     display: flex; justify-content: center; align-items: center; z-index: 200;
 }
-.hidden { display: none; }
-.glass-card {
-    background: #fff; width: 90%; max-width: 400px; padding: 25px;
-    border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
-.delete-icon { color: #ff6b6b; font-size: 0.9rem; border: 1px solid #ff6b6b; padding: 5px 10px; border-radius: 20px; background: white; margin-left: auto; margin-right: 10px; cursor: pointer;}
-.delete-icon:hover { background: #ff6b6b; color: white; }
+.hidden { display: none !important; }
 
-/* 입력 필드 스타일 */
+.input-field { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 0.95rem; }
+.btn-full { width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+.btn-green { background: #2ecc71; border:none; color:white; }
+.fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: #333; color: white; border: none; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 90; }
+.icon-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #333; }
+.delete-icon { color: #ff6b6b; font-size: 0.9rem; border: 1px solid #ff6b6b; padding: 5px 10px; border-radius: 20px; background: white; margin-left: auto; margin-right: 10px; }
+
+/* 상세 및 댓글 */
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .emotion-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
 .emo-btn { background: #f0f0f0; border: none; border-radius: 10px; padding: 10px 0; cursor: pointer; }
 .emo-btn.selected { background: #ffeaa7; border: 2px solid #fdcb6e; }
-
-/* 공통 입력창 스타일 */
-.input-field { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 0.95rem; }
 textarea { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 10px; resize: none; margin-bottom: 10px; font-family: 'Gaegu', cursive; font-size: 1.1rem; }
-.btn-full { width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
-
-/* 댓글 */
 .comments-area { max-height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 10px; margin: 15px 0; }
 .comment-item { font-size: 0.9rem; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
-.comment-author { font-weight: bold; color: #333; margin-right: 5px; }
 .comment-input-area { display: flex; gap: 5px; }
-#comment-writer, #comment-input { padding: 10px; border: 1px solid #ddd; border-radius: 10px; }
+#comment-input { padding: 10px; border: 1px solid #ddd; border-radius: 10px; }
 .icon-btn-send { background: none; border: none; color: #007bff; font-size: 1.2rem; cursor: pointer; padding: 5px; }
 
-.toast {
-    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px;
-    animation: fade 3s forwards; z-index: 300;
-}
+.toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; animation: fade 3s forwards; z-index: 300; }
 @keyframes fade { 0% {opacity:0; margin-top:-10px;} 10% {opacity:1; margin-top:0;} 90% {opacity:1;} 100% {opacity:0;} }

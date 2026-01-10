@@ -1,11 +1,3 @@
-// ==========================================
-// 1. 관리자 비밀번호 (이걸 입력하면 무조건 삭제됨)
-// ==========================================
-const ADMIN_PASSWORD = "admin"; 
-
-// ==========================================
-// 2. 파이어베이스 설정
-// ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyA-gj2lPOdcsAm0B14d5HRFq7E2KDDXEKo",
   authDomain: "heart-weather-1f20a.firebaseapp.com",
@@ -15,55 +7,118 @@ const firebaseConfig = {
   appId: "1:665410309658:web:950106a5d20ff593e64ba3"
 };
 
+// 파이어베이스 초기화
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
+const googleProvider = new firebase.auth.GoogleAuthProvider(); // 구글 로그인 도구
 
-// 요소 가져오기
+// 전역 변수
+let currentUser = null;
+let currentUserProfile = null;
+
+// 화면 요소
+const authScreen = document.getElementById('auth-screen');
+const signupScreen = document.getElementById('signup-screen'); // 추가 정보 입력창
+const appScreen = document.getElementById('app-screen');
+
+// ==========================================
+// 1. 구글 로그인 및 상태 관리
+// ==========================================
+
+// [구글 로그인 버튼 클릭]
+document.getElementById('btn-google').addEventListener('click', () => {
+    auth.signInWithPopup(googleProvider)
+        .catch((error) => {
+            alert("로그인 실패: " + error.message);
+        });
+});
+
+// [로그인 상태 변경 감지]
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        currentUser = user;
+        // DB에 저장된 사용자 정보(별칭 등)가 있는지 확인
+        db.collection('users').doc(user.uid).get().then((doc) => {
+            if (doc.exists) {
+                // 1. 이미 가입된 사용자 -> 바로 앱으로 이동
+                currentUserProfile = doc.data();
+                enterApp();
+            } else {
+                // 2. 처음 온 사용자 -> 추가 정보(별칭) 입력 화면으로 이동
+                authScreen.classList.add('hidden');
+                signupScreen.classList.remove('hidden');
+            }
+        });
+    } else {
+        // 로그아웃 상태
+        currentUser = null;
+        currentUserProfile = null;
+        authScreen.classList.remove('hidden');
+        signupScreen.classList.add('hidden');
+        appScreen.classList.add('hidden');
+    }
+});
+
+// [처음 가입 시 추가 정보 저장]
+document.getElementById('btn-save-info').addEventListener('click', () => {
+    const nick = document.getElementById('reg-nick').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+
+    if (!nick) return alert("별칭을 입력해주세요!");
+
+    // DB에 저장
+    db.collection('users').doc(currentUser.uid).set({
+        realName: currentUser.displayName, // 구글 이름
+        email: currentUser.email,          // 구글 이메일
+        nickname: nick,                    // 입력한 별칭
+        phone: phone,                      // 입력한 번호
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        // 저장 완료 후 앱 진입
+        currentUserProfile = { nickname: nick, phone: phone };
+        signupScreen.classList.add('hidden');
+        enterApp();
+    });
+});
+
+// 앱 화면 진입 처리
+function enterApp() {
+    document.getElementById('current-user-nick').textContent = `${currentUserProfile.nickname}님`;
+    appScreen.classList.remove('hidden');
+    loadPosts();
+}
+
+// [로그아웃]
+document.getElementById('btn-logout').addEventListener('click', () => {
+    auth.signOut();
+    alert("로그아웃 되었습니다.");
+});
+
+
+// ==========================================
+// 2. 앱 기능 (글쓰기, 댓글, 삭제)
+// ==========================================
 const board = document.getElementById('board-container');
 const fab = document.getElementById('fab-write');
 const writeModal = document.getElementById('write-modal');
 const viewModal = document.getElementById('view-modal');
-const closeWrite = document.getElementById('close-write');
-const closeView = document.getElementById('close-view');
-
-const submitPost = document.getElementById('submit-post');
-const postText = document.getElementById('post-text');
-const writerName = document.getElementById('writer-name'); // 작성자 이름
-const postPw = document.getElementById('post-pw');
-
-const submitComment = document.getElementById('submit-comment');
-const commentInput = document.getElementById('comment-input');
-const commentWriter = document.getElementById('comment-writer'); // 댓글 작성자 이름
-
-const toast = document.getElementById('toast');
-
 let selectedEmo = '☀️';
 let currentDocId = null;
 let currentDocData = null;
-
-// 오늘 날짜 기준
 const todayMidnight = new Date();
-todayMidnight.setHours(0, 0, 0, 0); 
+todayMidnight.setHours(0, 0, 0, 0);
 
-// ==========================================
-// 기능 로직
-// ==========================================
-
-// 글쓰기 창 열기
+// 모달 열기/닫기
 fab.addEventListener('click', () => {
     writeModal.classList.remove('hidden');
-    postText.value = '';
-    writerName.value = ''; // 이름 초기화
-    postPw.value = ''; 
-    
-    // 감정 초기화
+    document.getElementById('post-text').value = '';
     selectedEmo = '☀️';
     document.querySelectorAll('.emo-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector('[data-val="☀️"]').classList.add('selected');
 });
-
-closeWrite.addEventListener('click', () => writeModal.classList.add('hidden'));
-closeView.addEventListener('click', () => viewModal.classList.add('hidden'));
+document.getElementById('close-write').addEventListener('click', () => writeModal.classList.add('hidden'));
+document.getElementById('close-view').addEventListener('click', () => viewModal.classList.add('hidden'));
 
 // 감정 선택
 document.querySelectorAll('.emo-btn').forEach(btn => {
@@ -74,60 +129,49 @@ document.querySelectorAll('.emo-btn').forEach(btn => {
     });
 });
 
-// [글 저장]
-submitPost.addEventListener('click', () => {
-    const text = postText.value.trim();
-    const name = writerName.value.trim();
-    const pw = postPw.value.trim();
+// [글 쓰기] - 별칭 자동 입력
+document.getElementById('submit-post').addEventListener('click', () => {
+    const text = document.getElementById('post-text').value.trim();
+    if(!text) return alert("내용을 입력해주세요.");
 
-    if(!name) return alert('작성자 이름을 입력해주세요!');
-    if(!text) return alert('마음의 이야기를 적어주세요!');
-    if(!pw || pw.length < 1) return alert('삭제용 비밀번호를 입력해주세요!');
-
-    // DB에 저장
     db.collection('posts').add({
         emotion: selectedEmo,
-        author: name,      // 실명 저장
         text: text,
-        password: pw, 
+        author: currentUserProfile.nickname, // 별칭 사용
+        authorId: currentUser.uid,           // ID 저장
         date: firebase.firestore.FieldValue.serverTimestamp(),
         colorIdx: Math.floor(Math.random() * 5)
     }).then(() => {
         writeModal.classList.add('hidden');
         showToast("기록되었습니다!");
-    }).catch(err => {
-        alert("저장 실패: " + err.message);
     });
 });
 
-// [실시간 글 불러오기]
-db.collection('posts')
-  .where('date', '>=', todayMidnight) 
-  .orderBy('date', 'desc')
-  .onSnapshot(snapshot => {
-    board.innerHTML = '';
-    
-    if (snapshot.empty) {
-        board.innerHTML = '<div class="loading-msg" style="grid-column: 1/-1;">아직 오늘의 마음이 없어요.<br>오늘의 첫 마음을 남겨주세요! 📝</div>';
-        return;
-    }
-
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const div = document.createElement('div');
-        // 이름이 없으면 '익명'으로 처리 (옛날 글 호환)
-        const authorName = data.author ? data.author : '익명';
-        
-        div.className = `post-it color-${data.colorIdx}`;
-        div.innerHTML = `
-            <div class="post-emoji">${data.emotion}</div>
-            <div class="post-text">${data.text}</div>
-            <div class="post-author">From. ${authorName}</div>
-        `;
-        div.addEventListener('click', () => openDetail(doc.id, data));
-        board.appendChild(div);
+// [글 목록]
+function loadPosts() {
+    db.collection('posts')
+      .where('date', '>=', todayMidnight)
+      .orderBy('date', 'desc')
+      .onSnapshot(snapshot => {
+        board.innerHTML = '';
+        if (snapshot.empty) {
+            board.innerHTML = '<div class="loading-msg" style="grid-column: 1/-1;">아직 오늘의 마음이 없어요.<br>가장 먼저 마음을 남겨보세요!</div>';
+            return;
+        }
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const div = document.createElement('div');
+            div.className = `post-it color-${data.colorIdx}`;
+            div.innerHTML = `
+                <div class="post-emoji">${data.emotion}</div>
+                <div class="post-text">${data.text}</div>
+                <div class="post-author">From. ${data.author}</div>
+            `;
+            div.addEventListener('click', () => openDetail(doc.id, data));
+            board.appendChild(div);
+        });
     });
-});
+}
 
 // [상세보기]
 function openDetail(id, data) {
@@ -136,72 +180,62 @@ function openDetail(id, data) {
     
     document.getElementById('view-emotion').textContent = data.emotion;
     document.getElementById('view-text').textContent = data.text;
+    document.getElementById('view-author').textContent = `작성자: ${data.author}`;
     
-    // 작성자 표시
-    const authorName = data.author ? data.author : '익명';
-    document.getElementById('view-author').textContent = `작성자: ${authorName}`;
-    
+    // 삭제 버튼 표시: 내 글이거나 관리자('admin')일 때
+    const deleteBtn = document.getElementById('delete-btn');
+    if (data.authorId === currentUser.uid || currentUserProfile.nickname === 'admin') {
+        deleteBtn.classList.remove('hidden');
+    } else {
+        deleteBtn.classList.add('hidden');
+    }
+
     viewModal.classList.remove('hidden');
     loadComments(id);
 }
 
-// [삭제 기능 - 강력 수정]
+// [삭제]
 document.getElementById('delete-btn').addEventListener('click', () => {
-    if (confirm("정말 삭제하시겠습니까?")) {
-        const inputPw = prompt("비밀번호를 입력하세요 (관리자는 'admin')");
-        if (!inputPw) return; 
-
-        // 1. 관리자 비밀번호('admin')를 입력했거나
-        // 2. 글의 비밀번호와 일치하는 경우 삭제
-        if (inputPw === ADMIN_PASSWORD || (currentDocData.password && inputPw === currentDocData.password)) {
-            db.collection('posts').doc(currentDocId).delete().then(() => {
-                viewModal.classList.add('hidden');
-                showToast("삭제되었습니다 🗑️");
-            }).catch(error => {
-                alert("삭제 중 오류 발생: " + error.message);
-            });
-        } else {
-            alert("비밀번호가 틀립니다! (이전에 쓴 글이라면 'admin'을 입력해보세요)");
-        }
+    if(confirm("정말 삭제하시겠습니까?")) {
+        db.collection('posts').doc(currentDocId).delete().then(() => {
+            viewModal.classList.add('hidden');
+            showToast("삭제되었습니다.");
+        });
     }
 });
 
-// [댓글 불러오기]
+// [댓글 쓰기]
+document.getElementById('submit-comment').addEventListener('click', () => {
+    const input = document.getElementById('comment-input');
+    const text = input.value.trim();
+    if(!text) return;
+
+    db.collection('posts').doc(currentDocId).collection('comments').add({
+        text: text,
+        author: currentUserProfile.nickname,
+        authorId: currentUser.uid,
+        date: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    input.value = '';
+});
+
+// 댓글 목록
 function loadComments(id) {
     const list = document.getElementById('comments-list');
     db.collection('posts').doc(id).collection('comments').orderBy('date').onSnapshot(shot => {
         list.innerHTML = '';
         shot.forEach(d => {
             const c = d.data();
-            const cName = c.author ? c.author : '익명'; // 댓글 이름
-            
             const div = document.createElement('div');
             div.className = 'comment-item';
-            div.innerHTML = `<span class="comment-author">${cName}:</span> ${c.text}`;
+            div.innerHTML = `<span style="font-weight:bold">${c.author}:</span> ${c.text}`;
             list.appendChild(div);
         });
     });
 }
 
-// [댓글 저장 - 실명 포함]
-submitComment.addEventListener('click', () => {
-    const name = commentWriter.value.trim();
-    const text = commentInput.value.trim();
-    
-    if(!name) return alert('이름을 입력해주세요!');
-    if(!text) return;
-    
-    db.collection('posts').doc(currentDocId).collection('comments').add({
-        author: name, // 댓글 작성자 이름
-        text: text,
-        date: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    commentInput.value = '';
-    // 이름은 편의상 남겨둘 수도 있고 지울 수도 있음 (여기선 유지)
-});
-
-// 알림창
 function showToast(msg) {
+    const toast = document.getElementById('toast');
     toast.textContent = msg;
     toast.classList.remove('hidden');
     setTimeout(() => toast.classList.add('hidden'), 3000);
