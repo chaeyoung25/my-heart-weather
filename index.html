@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>마음 날씨 체크인</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-blob blob-1"></div>
+    <div class="background-blob blob-2"></div>
+    <div class="background-blob blob-3"></div>
+
+    <header class="glass-header">
+        <div class="logo"><i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨</div>
+    </header>
+
+    <main id="board-container">
+        <div class="loading-msg">마음들을 불러오고 있어요...</div>
+    </main>
+
+    <button id="fab-write" class="fab"><i class="fas fa-pen"></i></button>
+
+    <div id="write-modal" class="modal hidden">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2>오늘의 마음은?</h2>
+                <button class="close-btn" id="close-write">&times;</button>
+            </div>
+            <div class="emotion-grid">
+                <button class="emo-btn selected" data-val="☀️">☀️<br>맑음</button>
+                <button class="emo-btn" data-val="☁️">☁️<br>흐림</button>
+                <button class="emo-btn" data-val="☔">☔<br>우울</button>
+                <button class="emo-btn" data-val="⚡">⚡<br>화남</button>
+                <button class="emo-btn" data-val="☃️">☃️<br>외로움</button>
+                <button class="emo-btn" data-val="🥰">🥰<br>행복</button>
+                <button class="emo-btn" data-val="🥳">🥳<br>신남</button>
+                <button class="emo-btn" data-val="😰">😰<br>걱정</button>
+            </div>
+            <textarea id="post-text" placeholder="마음속 이야기를 적어주세요..." rows="4"></textarea>
+            <button id="submit-post" class="btn-full">내 마음 붙이기</button>
+        </div>
+    </div>
+
+    <div id="view-modal" class="modal hidden">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <span id="view-emotion" class="detail-emo">☀️</span>
+                <button class="close-btn" id="close-view">&times;</button>
+            </div>
+            <p id="view-text" class="detail-text"></p>
+            <div class="divider"></div>
+            <div id="comments-list" class="comments-area"></div>
+            <div class="comment-input-area">
+                <input type="text" id="comment-input" placeholder="따뜻한 댓글을 남겨주세요">
+                <button id="submit-comment" class="icon-btn-send"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden">새로운 마음이 등록되었어요!</div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
