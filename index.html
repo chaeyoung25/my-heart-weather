@@ -16,8 +16,7 @@
     <section id="auth-screen" class="auth-container">
         <div class="glass-card auth-card">
             <h1 class="logo-text"><i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨</h1>
-            <p class="subtitle">오늘 당신의 마음은 어떤가요?</p>
-            
+            <p class="subtitle">우리 공동체의 따뜻한 마음 기록</p>
             <button id="btn-google" class="btn-google">
                 <i class="fab fa-google"></i>
                 <span>Google 계정으로 시작하기</span>
@@ -27,20 +26,31 @@
 
     <section id="signup-screen" class="auth-container hidden">
         <div class="glass-card auth-card">
-            <h2>반가워요! 👋</h2>
-            <p class="subtitle">앱에서 사용할 멋진 별명을 지어주세요.</p>
+            <h2>가입 신청 📝</h2>
+            <p class="subtitle">관리자 승인 후 이용 가능합니다.<br>본인의 실명과 연락처를 입력해주세요.</p>
             
-            <input type="text" id="reg-nick" class="input-field" placeholder="별칭 (예: 행복한 구름)">
-            <input type="text" id="reg-phone" class="input-field" placeholder="연락처 (선택사항)">
+            <input type="text" id="reg-nick" class="input-field" placeholder="이름 (실명)">
+            <input type="text" id="reg-phone" class="input-field" placeholder="연락처 (예: 010-1234-5678)">
             
-            <button id="btn-save-info" class="btn-full btn-green">입장하기</button>
+            <button id="btn-save-info" class="btn-full btn-green">가입 신청하기</button>
+        </div>
+    </section>
+
+    <section id="waiting-screen" class="auth-container hidden">
+        <div class="glass-card auth-card">
+            <h2>⏳ 승인 대기 중</h2>
+            <p class="subtitle" style="margin-top:10px;">관리자가 확인 후 승인해드려요.<br>잠시만 기다려주세요.</p>
+            <button id="btn-check-status" class="btn-full">승인되었는지 확인하기 (새로고침)</button>
         </div>
     </section>
 
     <div id="app-screen" class="hidden">
         <header class="glass-header">
-            <div class="logo"><i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨</div>
+            <div class="header-left">
+                <div class="logo"><i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨</div>
+            </div>
             <div class="user-info">
+                <button id="btn-admin" class="icon-btn hidden" title="회원 관리" style="color:#ff6b6b; margin-right:10px;"><i class="fas fa-users-cog"></i></button>
                 <span id="current-user-nick">사용자님</span>
                 <button id="btn-logout" class="icon-btn" title="로그아웃"><i class="fas fa-sign-out-alt"></i></button>
             </div>
@@ -88,6 +98,18 @@
             <div class="comment-input-area">
                 <input type="text" id="comment-input" placeholder="댓글을 남겨주세요" style="flex:1;">
                 <button id="submit-comment" class="icon-btn-send"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-modal" class="modal hidden">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2>👑 회원 승인 관리</h2>
+                <button class="close-btn" id="close-admin">&times;</button>
+            </div>
+            <div id="user-list" class="comments-area" style="max-height: 400px;">
+                <p style="text-align:center; color:#999;">승인 대기 중인 회원이 없습니다.</p>
             </div>
         </div>
     </div>
