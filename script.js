@@ -1,4 +1,12 @@
-// 1. 사용자님의 파이어베이스 키 설정 (완료!)
+// ==========================================
+// 1. 사용자 설정 (관리자 비밀번호)
+// ==========================================
+const ADMIN_PASSWORD = "admin"; // 👈 관리자용 만능 비밀번호 (원하는 걸로 바꾸세요)
+
+
+// ==========================================
+// 2. 파이어베이스 설정
+// ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyA-gj2lPOdcsAm0B14d5HRFq7E2KDDXEKo",
   authDomain: "heart-weather-1f20a.firebaseapp.com",
@@ -8,11 +16,11 @@ const firebaseConfig = {
   appId: "1:665410309658:web:950106a5d20ff593e64ba3"
 };
 
-// 2. 파이어베이스 시작
+// 파이어베이스 시작
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// 3. 화면의 요소들 가져오기
+// 요소 가져오기
 const board = document.getElementById('board-container');
 const fab = document.getElementById('fab-write');
 const writeModal = document.getElementById('write-modal');
@@ -21,115 +29,156 @@ const closeWrite = document.getElementById('close-write');
 const closeView = document.getElementById('close-view');
 const submitPost = document.getElementById('submit-post');
 const postText = document.getElementById('post-text');
+const postPw = document.getElementById('post-pw');
 const toast = document.getElementById('toast');
+
 let selectedEmo = '☀️';
 let currentDocId = null;
+let currentDocData = null;
 
-// 4. 글쓰기 버튼 누르면 창 열기
+// ==========================================
+// 3. 오늘 자정(00:00) 시간 구하기
+// ==========================================
+const todayMidnight = new Date();
+todayMidnight.setHours(0, 0, 0, 0); // 오늘 날짜의 0시 0분 0초로 설정
+
+
+// ==========================================
+// 4. 기능 로직
+// ==========================================
+
+// 글쓰기 창 열기
 fab.addEventListener('click', () => {
     writeModal.classList.remove('hidden');
-    postText.value = ''; // 입력창 비우기
+    postText.value = '';
+    postPw.value = ''; // 비번 초기화
+    
+    // 감정 초기화
+    selectedEmo = '☀️';
+    document.querySelectorAll('.emo-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector('[data-val="☀️"]').classList.add('selected');
 });
 
-// 닫기 버튼들
 closeWrite.addEventListener('click', () => writeModal.classList.add('hidden'));
 closeView.addEventListener('click', () => viewModal.classList.add('hidden'));
 
-// 5. 감정 이모지 선택하기
+// 감정 선택
 document.querySelectorAll('.emo-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        // 다른 버튼 선택 해제
+    btn.addEventListener('click', () => {
         document.querySelectorAll('.emo-btn').forEach(b => b.classList.remove('selected'));
-        // 누른 버튼 선택 표시
         btn.classList.add('selected');
-        // 감정 값 저장
         selectedEmo = btn.dataset.val;
     });
 });
 
-// 6. [내 마음 붙이기] 버튼 누르면 저장하기
+// [글 저장]
 submitPost.addEventListener('click', () => {
-    if(!postText.value) return alert('마음의 이야기를 조금만 적어주세요!');
-    
-    // 데이터베이스에 저장
+    const text = postText.value.trim();
+    const pw = postPw.value.trim();
+
+    if(!text) return alert('마음의 이야기를 적어주세요!');
+    if(!pw || pw.length < 1) return alert('삭제할 때 필요한 비밀번호(4자리)를 입력해주세요!');
+
+    // DB에 저장
     db.collection('posts').add({
         emotion: selectedEmo,
-        text: postText.value,
-        date: firebase.firestore.FieldValue.serverTimestamp(), // 현재 시간
-        colorIdx: Math.floor(Math.random() * 5) // 랜덤 포스트잇 색상 (0~4)
+        text: text,
+        password: pw, // 비밀번호 저장
+        date: firebase.firestore.FieldValue.serverTimestamp(), // 서버 시간
+        colorIdx: Math.floor(Math.random() * 5)
     }).then(() => {
-        // 성공하면 창 닫고 알림 띄우기
         writeModal.classList.add('hidden');
-        showToast("마음이 날씨지도에 기록되었어요!");
-    }).catch((error) => {
-        console.error("에러 발생:", error);
-        alert("저장에 실패했어요. 잠시 후 다시 시도해주세요.");
+        showToast("오늘의 마음이 기록되었어요!");
+    }).catch(err => {
+        alert("저장 실패: " + err.message);
     });
 });
 
-// 7. 실시간으로 글 불러오기 (화면에 표시)
-db.collection('posts').orderBy('date', 'desc').onSnapshot(snapshot => {
-    board.innerHTML = ''; // 화면 비우고 다시 그리기
+// [실시간 글 불러오기 - 24시간 필터]
+// 중요: 이 쿼리는 파이어베이스 콘솔에서 '색인(Index)'을 만들어야 작동합니다.
+// 처음에 에러가 뜨면 F12 콘솔창의 링크를 눌러주세요.
+db.collection('posts')
+  .where('date', '>=', todayMidnight) // 오늘 자정 이후의 글만!
+  .orderBy('date', 'desc')
+  .onSnapshot(snapshot => {
+    board.innerHTML = '';
+    
+    if (snapshot.empty) {
+        board.innerHTML = '<div class="loading-msg" style="grid-column: 1/-1;">아직 오늘의 마음이 없어요.<br>가장 먼저 마음을 남겨보세요! 📝</div>';
+        return;
+    }
+
     snapshot.forEach(doc => {
         const data = doc.data();
         const div = document.createElement('div');
-        
-        // 포스트잇 만들기
         div.className = `post-it color-${data.colorIdx}`;
         div.innerHTML = `
             <div class="post-emoji">${data.emotion}</div>
             <div class="post-text">${data.text}</div>
-            <div class="post-meta">👆 눌어서 댓글보기</div>
+            <div class="post-meta">👆 클릭해서 보기</div>
         `;
-        
-        // 포스트잇 누르면 상세보기 열기
         div.addEventListener('click', () => openDetail(doc.id, data));
         board.appendChild(div);
     });
 });
 
-// 8. 상세보기 & 댓글 불러오기
+// [상세보기]
 function openDetail(id, data) {
     currentDocId = id;
+    currentDocData = data;
     document.getElementById('view-emotion').textContent = data.emotion;
     document.getElementById('view-text').textContent = data.text;
     viewModal.classList.remove('hidden');
     loadComments(id);
 }
 
-// 댓글 목록 가져오기
+// [삭제 기능]
+document.getElementById('delete-btn').addEventListener('click', () => {
+    if (confirm("정말 이 마음을 지우시겠어요?")) {
+        const inputPw = prompt("비밀번호를 입력하세요 (관리자는 'admin' 입력)");
+        
+        if (!inputPw) return; 
+
+        // 비밀번호 확인: 관리자 키이거나 OR 작성자 비번이거나
+        if (inputPw === ADMIN_PASSWORD || inputPw === currentDocData.password) {
+            db.collection('posts').doc(currentDocId).delete().then(() => {
+                viewModal.classList.add('hidden');
+                showToast("마음이 깨끗하게 비워졌어요 🧹");
+            });
+        } else {
+            alert("비밀번호가 일치하지 않습니다.");
+        }
+    }
+});
+
+// [댓글 로직]
 function loadComments(id) {
     const list = document.getElementById('comments-list');
-    // 해당 글(id)의 댓글들을 시간순으로 가져오기
     db.collection('posts').doc(id).collection('comments').orderBy('date').onSnapshot(shot => {
         list.innerHTML = '';
         shot.forEach(d => {
             const c = d.data();
-            const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment-item';
-            commentDiv.innerText = `익명: ${c.text}`;
-            list.appendChild(commentDiv);
+            const div = document.createElement('div');
+            div.className = 'comment-item';
+            div.innerText = `💬 ${c.text}`;
+            list.appendChild(div);
         });
     });
 }
 
-// 9. 댓글 전송하기
 document.getElementById('submit-comment').addEventListener('click', () => {
     const input = document.getElementById('comment-input');
-    if(!input.value) return; // 내용 없으면 중단
-    
-    // 댓글 저장
+    if(!input.value) return;
     db.collection('posts').doc(currentDocId).collection('comments').add({
         text: input.value,
         date: firebase.firestore.FieldValue.serverTimestamp()
     });
-    input.value = ''; // 입력창 비우기
+    input.value = '';
 });
 
-// 10. 알림 메시지(토스트) 띄우기
+// 알림 메시지
 function showToast(msg) {
     toast.textContent = msg;
     toast.classList.remove('hidden');
-    // 3초 뒤에 사라짐
     setTimeout(() => toast.classList.add('hidden'), 3000);
 }

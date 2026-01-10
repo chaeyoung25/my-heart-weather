@@ -18,7 +18,7 @@
     </header>
 
     <main id="board-container">
-        <div class="loading-msg">마음들을 불러오고 있어요...</div>
+        <div class="loading-msg">오늘의 마음들을 불러오고 있어요...<br>(처음 실행 시 F12 콘솔 확인 필요)</div>
     </main>
 
     <button id="fab-write" class="fab"><i class="fas fa-pen"></i></button>
@@ -29,6 +29,7 @@
                 <h2>오늘의 마음은?</h2>
                 <button class="close-btn" id="close-write">&times;</button>
             </div>
+            
             <div class="emotion-grid">
                 <button class="emo-btn selected" data-val="☀️">☀️<br>맑음</button>
                 <button class="emo-btn" data-val="☁️">☁️<br>흐림</button>
@@ -39,7 +40,11 @@
                 <button class="emo-btn" data-val="🥳">🥳<br>신남</button>
                 <button class="emo-btn" data-val="😰">😰<br>걱정</button>
             </div>
+
             <textarea id="post-text" placeholder="마음속 이야기를 적어주세요..." rows="4"></textarea>
+            
+            <input type="password" id="post-pw" placeholder="비밀번호 4자리 (삭제용)" maxlength="4" class="pw-input">
+            
             <button id="submit-post" class="btn-full">내 마음 붙이기</button>
         </div>
     </div>
@@ -48,11 +53,14 @@
         <div class="modal-content glass-card">
             <div class="modal-header">
                 <span id="view-emotion" class="detail-emo">☀️</span>
+                <button id="delete-btn" class="icon-btn delete-icon"><i class="fas fa-trash"></i></button>
                 <button class="close-btn" id="close-view">&times;</button>
             </div>
             <p id="view-text" class="detail-text"></p>
             <div class="divider"></div>
+            
             <div id="comments-list" class="comments-area"></div>
+            
             <div class="comment-input-area">
                 <input type="text" id="comment-input" placeholder="따뜻한 댓글을 남겨주세요">
                 <button id="submit-comment" class="icon-btn-send"><i class="fas fa-paper-plane"></i></button>
@@ -60,7 +68,7 @@
         </div>
     </div>
 
-    <div id="toast" class="toast hidden">새로운 마음이 등록되었어요!</div>
+    <div id="toast" class="toast hidden">알림 메시지</div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>

@@ -1,14 +1,14 @@
-/* 전체 설정 */
+/* 기본 설정 */
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans KR', sans-serif; }
 body { background-color: #f4f7f6; min-height: 100vh; padding-top: 70px; overflow-x: hidden; }
 
-/* 둥둥 떠다니는 배경 (감성 포인트) */
+/* 배경 장식 (블롭 효과) */
 .background-blob { position: absolute; border-radius: 50%; filter: blur(60px); z-index: -1; opacity: 0.6; }
 .blob-1 { top: -50px; left: -50px; width: 300px; height: 300px; background: #ff9a9e; }
 .blob-2 { bottom: -50px; right: -50px; width: 300px; height: 300px; background: #a18cd1; }
 .blob-3 { top: 40%; left: 30%; width: 200px; height: 200px; background: #fad0c4; }
 
-/* 상단 헤더 */
+/* 헤더 */
 .glass-header {
     position: fixed; top: 0; width: 100%; height: 60px;
     background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px);
@@ -17,72 +17,72 @@ body { background-color: #f4f7f6; min-height: 100vh; padding-top: 70px; overflow
     font-size: 1.2rem; font-weight: bold; color: #333; z-index: 100;
 }
 
-/* 포스트잇들이 붙는 보드 */
+/* 포스트잇 보드 */
 #board-container {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px; padding: 20px; max-width: 800px; margin: 0 auto;
 }
-.loading-msg { text-align: center; color: #888; margin-top: 50px; width: 100%; }
+.loading-msg { text-align: center; color: #888; margin-top: 50px; width: 100%; font-size: 0.9rem; line-height: 1.6; }
 
-/* 포스트잇 디자인 */
+/* 포스트잇 스타일 */
 .post-it {
-    padding: 15px; border-radius: 0 0 15px 0; /* 우측하단 접힌 느낌 */
+    padding: 15px; border-radius: 0 0 15px 0;
     box-shadow: 2px 4px 10px rgba(0,0,0,0.1); cursor: pointer;
     min-height: 150px; display: flex; flex-direction: column; justify-content: space-between;
     transition: transform 0.2s; border-top: 1px solid rgba(255,255,255,0.4);
 }
 .post-it:hover { transform: translateY(-5px); }
 
-/* 포스트잇 색상들 (파스텔) */
-.color-0 { background: #fff4bd; color: #5a4a10; } /* 노랑 */
-.color-1 { background: #d4f0f0; color: #1e4a4a; } /* 민트 */
-.color-2 { background: #ffd6e7; color: #5a1e3a; } /* 핑크 */
-.color-3 { background: #e2dbf5; color: #3a1e5a; } /* 보라 */
-.color-4 { background: #d4ffd6; color: #1e5a2b; } /* 그린 */
+/* 포스트잇 색상 */
+.color-0 { background: #fff4bd; color: #5a4a10; } 
+.color-1 { background: #d4f0f0; color: #1e4a4a; } 
+.color-2 { background: #ffd6e7; color: #5a1e3a; } 
+.color-3 { background: #e2dbf5; color: #3a1e5a; } 
+.color-4 { background: #d4ffd6; color: #1e5a2b; } 
 
 .post-emoji { font-size: 2rem; margin-bottom: 5px; }
 .post-text { font-size: 0.9rem; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-family: 'Gaegu', cursive; }
 .post-meta { font-size: 0.7rem; text-align: right; opacity: 0.6; margin-top: 10px; }
 
-/* 글쓰기 버튼 (우측 하단 둥근 버튼) */
+/* FAB 버튼 */
 .fab {
     position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
     border-radius: 50%; background: #333; color: white; border: none;
-    font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    z-index: 90;
+    font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 90;
 }
 
-/* 모달창 (글쓰기, 보기) */
+/* 모달 */
 .modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.3); backdrop-filter: blur(3px);
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(3px);
     display: flex; justify-content: center; align-items: center; z-index: 200;
 }
 .hidden { display: none; }
-
 .glass-card {
     background: #fff; width: 90%; max-width: 400px; padding: 25px;
     border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
-.modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+.delete-icon { color: #ff6b6b; font-size: 1.2rem; cursor: pointer; margin-left: 10px; margin-right: auto; border:none; background:none;}
 
-/* 감정 선택 */
+/* 입력 요소 */
 .emotion-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
 .emo-btn { background: #f0f0f0; border: none; border-radius: 10px; padding: 10px 0; cursor: pointer; }
 .emo-btn.selected { background: #ffeaa7; border: 2px solid #fdcb6e; }
 
-textarea { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 10px; resize: none; margin-bottom: 15px; }
+textarea { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 10px; resize: none; margin-bottom: 10px; font-family: 'Gaegu', cursive; font-size: 1.1rem; }
+.pw-input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 15px; }
 .btn-full { width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
 
-/* 댓글 스타일 */
+/* 댓글 */
 .comments-area { max-height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 10px; margin: 15px 0; }
 .comment-item { font-size: 0.9rem; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
 .comment-input-area { display: flex; gap: 5px; }
 #comment-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; }
 .icon-btn-send { background: none; border: none; color: #007bff; font-size: 1.2rem; cursor: pointer; padding: 5px; }
 
-/* 알림 */
+/* 토스트 알림 */
 .toast {
     position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
     background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px;
