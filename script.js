@@ -1,9 +1,8 @@
 // ==========================================
-// 1. 관리자 & 이메일 키 설정 (적용됨!)
+// 1. 관리자 & 이메일 키 설정
 // ==========================================
 const ADMIN_EMAIL = "chaeyoung2@gmail.com"; 
 
-// 알려주신 EmailJS 키 3개
 const EMAIL_SERVICE_ID = "service_vnd13x5";
 const EMAIL_TEMPLATE_ID = "template_6ek1hgc";
 const EMAIL_PUBLIC_KEY = "YnbvLgrg8MMJRhFTu";
@@ -19,59 +18,94 @@ const firebaseConfig = {
   appId: "1:665410309658:web:950106a5d20ff593e64ba3"
 };
 
-// 초기화
+// 파이어베이스 초기화
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-// EmailJS 초기화
-(function(){
-    emailjs.init(EMAIL_PUBLIC_KEY);
-})();
+// EmailJS 초기화 (안전 장치 추가: 라이브러리가 없어도 앱이 멈추지 않음)
+try {
+    if (typeof emailjs !== 'undefined') {
+        emailjs.init(EMAIL_PUBLIC_KEY);
+        console.log("이메일 도구 준비 완료!");
+    } else {
+        console.warn("⚠️ 이메일 도구(EmailJS)를 찾을 수 없습니다. HTML 파일을 확인하세요.");
+    }
+} catch (e) {
+    console.error("이메일 도구 초기화 중 오류:", e);
+}
 
-// 변수들
-let currentUser = null;
-let currentUserProfile = null;
-let isAdmin = false;
-
+// 화면 요소 가져오기
 const authScreen = document.getElementById('auth-screen');
 const signupScreen = document.getElementById('signup-screen');
 const waitingScreen = document.getElementById('waiting-screen'); 
 const appScreen = document.getElementById('app-screen');
 
-// 구글 로그인
-document.getElementById('btn-google').addEventListener('click', () => {
-    auth.signInWithPopup(googleProvider).catch((error) => {
-        if(error.code === 'auth/unauthorized-domain') {
-            alert("파이어베이스 도메인 승인 필요");
-        } else {
-            alert("로그인 실패: " + error.message);
-        }
+// 변수
+let currentUser = null;
+let currentUserProfile = null;
+let isAdmin = false;
+
+// ==========================================
+// 2. 구글 로그인 및 상태 관리
+// ==========================================
+
+// [구글 로그인 버튼]
+const googleBtn = document.getElementById('btn-google');
+if (googleBtn) {
+    googleBtn.addEventListener('click', () => {
+        auth.signInWithPopup(googleProvider).catch((error) => {
+            if(error.code === 'auth/unauthorized-domain') {
+                alert("🚨 도메인 승인 오류: 파이어베이스 콘솔에서 '승인된 도메인'을 확인해주세요.");
+            } else if (error.code === 'auth/operation-not-allowed') {
+                 alert("🚨 설정 오류: 파이어베이스 콘솔에서 구글 로그인을 '사용 설정(On)'하고 '저장'했는지 확인해주세요.");
+            } else {
+                alert("로그인 실패: " + error.message);
+            }
+        });
+    });
+}
+
+// [초기화(강제 로그아웃) 버튼] - 로그인 화면이 멈췄을 때 사용
+document.getElementById('btn-force-logout').addEventListener('click', () => {
+    auth.signOut().then(() => {
+        alert("초기화되었습니다. 다시 로그인해주세요.");
+        window.location.reload();
     });
 });
 
-// 로그인 상태 감지
+// [로그인 상태 감지]
 auth.onAuthStateChanged((user) => {
     if (user) {
         currentUser = user;
         isAdmin = (user.email === ADMIN_EMAIL);
 
+        // DB에서 사용자 정보 확인
         db.collection('users').doc(user.uid).get().then((doc) => {
             if (doc.exists) {
                 const userData = doc.data();
+                // 관리자이거나, 승인된 유저라면 앱으로 입장
                 if (isAdmin || userData.isApproved === true) {
                     currentUserProfile = userData;
                     enterApp();
                 } else {
+                    // 승인 안 됨 -> 대기 화면
                     showWaitingScreen();
                 }
             } else {
+                // 정보 없음 -> 가입 신청 화면
                 authScreen.classList.add('hidden');
                 signupScreen.classList.remove('hidden');
             }
+        }).catch((err) => {
+             console.error("DB 에러:", err);
+             // DB 에러가 나면 일단 가입 화면으로 보내서 멈춤 방지
+             authScreen.classList.add('hidden');
+             signupScreen.classList.remove('hidden');
         });
     } else {
+        // 로그아웃 상태
         resetScreens();
         authScreen.classList.remove('hidden');
     }
@@ -115,27 +149,29 @@ document.getElementById('btn-save-info').addEventListener('click', () => {
             currentUserProfile = { nickname: nick, isApproved: true };
             enterApp();
         } else {
-            // ★ 관리자에게 메일 보내기 (EmailJS)
-            const templateParams = {
-                nick: nick,
-                phone: phone
-            };
-
-            emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams)
-                .then(function(response) {
-                   console.log('SUCCESS!', response.status, response.text);
-                   alert("가입 신청 완료! 관리자에게 메일을 보냈습니다.");
-                   showWaitingScreen();
-                }, function(error) {
-                   console.log('FAILED...', error);
-                   alert("가입 신청은 되었으나 메일 전송에 실패했습니다.");
-                   showWaitingScreen();
-                });
+            // 이메일 발송 시도
+            if (typeof emailjs !== 'undefined') {
+                const templateParams = { nick: nick, phone: phone };
+                emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams)
+                    .then(() => {
+                       alert("가입 신청 완료! 관리자에게 메일을 보냈습니다.");
+                       showWaitingScreen();
+                    })
+                    .catch((err) => {
+                       console.error("메일 전송 실패:", err);
+                       alert("가입 신청은 되었지만 메일 전송에 실패했습니다. (관리자에게 따로 알려주세요)");
+                       showWaitingScreen();
+                    });
+            } else {
+                alert("가입 신청 완료! (이메일 도구 로드 실패)");
+                showWaitingScreen();
+            }
         }
     });
 });
 
 document.getElementById('btn-check-status').addEventListener('click', () => window.location.reload());
+document.getElementById('btn-logout-wait').addEventListener('click', () => auth.signOut());
 
 function enterApp() {
     authScreen.classList.add('hidden');
@@ -143,7 +179,9 @@ function enterApp() {
     waitingScreen.classList.add('hidden');
     appScreen.classList.remove('hidden');
     
-    document.getElementById('current-user-nick').textContent = `${currentUserProfile.nickname}님`;
+    // 닉네임이 없으면 구글 이름으로 대체
+    const displayName = currentUserProfile ? currentUserProfile.nickname : currentUser.displayName;
+    document.getElementById('current-user-nick').textContent = `${displayName}님`;
     
     if (isAdmin) {
         document.getElementById('btn-admin').classList.remove('hidden');
@@ -158,7 +196,10 @@ document.getElementById('btn-logout').addEventListener('click', () => {
     alert("로그아웃 되었습니다.");
 });
 
-// 관리자 모달
+
+// ==========================================
+// 3. 관리자 및 게시판 기능
+// ==========================================
 const adminModal = document.getElementById('admin-modal');
 const userListContainer = document.getElementById('user-list');
 
@@ -199,7 +240,6 @@ window.approveUser = function(uid) {
     }
 };
 
-// 앱 기능 (글쓰기 등)
 const board = document.getElementById('board-container');
 const fab = document.getElementById('fab-write');
 const writeModal = document.getElementById('write-modal');
@@ -231,10 +271,13 @@ document.getElementById('submit-post').addEventListener('click', () => {
     const text = document.getElementById('post-text').value.trim();
     if(!text) return alert("내용을 입력해주세요.");
 
+    // 닉네임 안전장치
+    const authorName = currentUserProfile ? currentUserProfile.nickname : currentUser.displayName;
+
     db.collection('posts').add({
         emotion: selectedEmo,
         text: text,
-        author: currentUserProfile.nickname,
+        author: authorName,
         authorId: currentUser.uid,
         date: firebase.firestore.FieldValue.serverTimestamp(),
         colorIdx: Math.floor(Math.random() * 5)
@@ -295,9 +338,12 @@ document.getElementById('submit-comment').addEventListener('click', () => {
     const input = document.getElementById('comment-input');
     const text = input.value.trim();
     if(!text) return;
+
+    const authorName = currentUserProfile ? currentUserProfile.nickname : currentUser.displayName;
+
     db.collection('posts').doc(currentDocId).collection('comments').add({
         text: text,
-        author: currentUserProfile.nickname,
+        author: authorName,
         authorId: currentUser.uid,
         date: firebase.firestore.FieldValue.serverTimestamp()
     });
