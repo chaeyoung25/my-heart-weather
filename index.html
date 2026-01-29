@@ -19,7 +19,6 @@
         .logo { font-size: 1.2rem; font-weight: bold; position: relative; }
         .admin-active { color: #ff6b6b !important; text-shadow: 0 0 5px rgba(255, 107, 107, 0.5); }
         
-        /* 🔴 알림 배지 (헤더용) */
         .noti-dot { position: absolute; top: -2px; right: -8px; width: 10px; height: 10px; background: #ff4757; border-radius: 50%; border: 2px solid white; display: none; }
         .noti-active { display: block; animation: bounce 1s infinite; }
         
@@ -29,7 +28,6 @@
         .post-it { padding: 15px; border-radius: 0 0 15px 0; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); cursor: pointer; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; border-top: 1px solid rgba(255,255,255,0.4); position: relative; }
         .post-it:hover { transform: translateY(-5px); }
         
-        /* 내 글 표시 & 댓글 알림 */
         .my-post-tag { position: absolute; top: -5px; right: -5px; background: #333; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; z-index: 10; opacity: 0.8; }
         .comment-badge { background: #ff4757; color: white; font-size: 0.8rem; padding: 3px 8px; border-radius: 20px; margin-top: 5px; text-align: center; font-weight: bold; animation: pulse 2s infinite; display: none; }
 
@@ -62,6 +60,9 @@
         .icon-btn-send { background: none; border: none; color: #007bff; font-size: 1.2rem; cursor: pointer; padding: 5px; }
         .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; animation: fade 3s forwards; z-index: 300; }
         
+        /* 💖 캠페인 문구 스타일 */
+        .campaign-text { text-align: center; font-size: 0.85rem; color: #888; font-family: 'Gaegu', cursive; margin-bottom: 8px; margin-top: 5px; }
+
         @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-3px);} }
         @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
         @keyframes fade { 0% {opacity:0; margin-top:-10px;} 10% {opacity:1; margin-top:0;} 90% {opacity:1;} 100% {opacity:0;} }
@@ -135,8 +136,14 @@
             </div>
             <div id="view-author" style="font-size:0.9rem; color:#666; margin-bottom:5px;">작성자: -</div>
             <p id="view-text" class="detail-text"></p>
+            
             <div class="divider"></div>
             <div id="comments-list" class="comments-area"></div>
+            
+            <div class="campaign-text">
+                <i class="fas fa-smile" style="color:#ffb8b8;"></i> 따뜻한 댓글이 우리 모두를 행복하게 합니다
+            </div>
+
             <div class="comment-input-area">
                 <input type="text" id="comment-writer" placeholder="이름" style="width: 70px;">
                 <input type="password" id="comment-pw" placeholder="비번" style="width: 60px;">
@@ -265,7 +272,7 @@
                 date: firebase.firestore.FieldValue.serverTimestamp(),
                 colorIdx: Math.floor(Math.random() * 5)
             }).then((docRef) => {
-                // ✅ 중요: 내가 쓴 글 ID 저장
+                // ✅ 내가 쓴 글 ID 저장
                 saveMyPost(docRef.id);
             }).catch(err => {
                 console.log("저장 실패:", err);
@@ -322,7 +329,6 @@
                     
                     // 헤더 빨간 점 켜기
                     document.getElementById('header-noti').classList.add('noti-active');
-                    showToast("내 글에 새로운 댓글이 있어요!");
                 }
             });
         }
