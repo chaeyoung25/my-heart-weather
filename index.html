@@ -28,7 +28,6 @@
         .post-it { padding: 15px; border-radius: 0 0 15px 0; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); cursor: pointer; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; border-top: 1px solid rgba(255,255,255,0.4); position: relative; }
         .post-it:hover { transform: translateY(-5px); }
         
-        /* ✨ 공지용 태그 스타일 */
         .notice-tag { position: absolute; top: -10px; left: 10px; background: #6c5ce7; color: white; font-size: 0.75rem; padding: 3px 10px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-family: 'Gaegu', cursive; z-index: 5; }
         .my-post-tag { position: absolute; top: -5px; right: -5px; background: #333; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; z-index: 10; opacity: 0.8; }
         .comment-badge { background: #ff4757; color: white; font-size: 0.8rem; padding: 3px 8px; border-radius: 20px; margin-top: 5px; text-align: center; font-weight: bold; animation: pulse 2s infinite; display: none; }
@@ -131,14 +130,13 @@
     <div id="view-modal" class="modal hidden">
         <div class="modal-content glass-card">
             <div class="modal-header">
-                <span id="view-emotion" class="detail-emo">☀️</span>
+                <span id="view-emotion" class="detail-emo" style="font-size:2rem;">☀️</span>
                 <button id="delete-btn" class="icon-btn delete-icon"><i class="fas fa-trash"></i> 삭제</button>
-                <button class="close-btn" id="close-view">&times;</button>
+                <button class="close-btn" id="close-view" style="font-size:1.5rem; border:none; background:none; cursor:pointer;">&times;</button>
             </div>
             <div id="view-author" style="font-size:0.9rem; color:#666; margin-bottom:5px;">작성자: -</div>
-            <p id="view-text" class="detail-text" style="font-family:'Gaegu', cursive; font-size:1.2rem; line-height:1.6; white-space:pre-wrap;"></p>
+            <p id="view-text" class="detail-text" style="font-family:'Gaegu', cursive; font-size:1.2rem; line-height:1.6; white-space:pre-wrap; margin-bottom:15px;"></p>
             
-            <div class="divider"></div>
             <div id="comments-list" class="comments-area"></div>
             
             <div class="campaign-text">
@@ -172,17 +170,32 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        function sendPushNotification(title, message) {
-            fetch('https://ntfy.sh/', {
-                method: 'POST',
-                body: JSON.stringify({
-                    topic: 'pastor-heart-weather-v3',
-                    title: title, 
-                    message: message,
-                    tags: ['heart_decoration'], 
-                    priority: 3
-                })
-            }).catch(err => console.log("알림 실패:", err));
+        // [변수 선언부] - 누락되었던 btnAdmin 추가
+        const board = document.getElementById('board-container');
+        const fab = document.getElementById('fab-write');
+        const writeModal = document.getElementById('write-modal');
+        const viewModal = document.getElementById('view-modal');
+        const toast = document.getElementById('toast');
+        const btnAdmin = document.getElementById('btn-admin-mode');
+        const todayMidnight = new Date();
+        todayMidnight.setHours(0, 0, 0, 0);
+
+        let isAdminMode = false;
+        const ADMIN_CODE = "0929"; 
+
+        const FIXED_NOTICE = {
+            id: 'system-notice',
+            emotion: '🌱',
+            author: '마음날씨',
+            text: `반가워요! 이곳은 세상의 소음에서 잠시 벗어나 나의 내면을 마주하고, 서로의 온기를 나누는 소중한 공간이에요.\n\n누구에게도 말하지 못했던 속마음을 편안하게 꺼내어보세요. 익명의 품 안에서 우리는 무엇이든 솔직하게 이야기할 수 있답니다.\n\n혼자 짊어지기엔 너무 무거웠던 고민들도 이곳에서 조금씩 나누어 들어볼까요? 당신이 건네는 따뜻한 한 마디가 누군가에게는 오늘을 버티게 하는 커다란 행복이자 방패가 되어줄 거예요.\n\n바쁜 세상 속에서도 누군가는 반드시 당신을 응원하고 있다는 걸 기억해 주세요. 오늘도 당신의 하루를 진심으로 응원할게요!`,
+            colorIdx: 3,
+            isNotice: true
+        };
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
         }
 
         function saveMyPost(docId) {
@@ -195,27 +208,6 @@
             let myPosts = JSON.parse(localStorage.getItem('my_posts') || '[]');
             return myPosts.includes(docId);
         }
-
-        let isAdminMode = false;
-        const ADMIN_CODE = "0929"; 
-
-        const board = document.getElementById('board-container');
-        const fab = document.getElementById('fab-write');
-        const writeModal = document.getElementById('write-modal');
-        const viewModal = document.getElementById('view-modal');
-        const toast = document.getElementById('toast');
-        const todayMidnight = new Date();
-        todayMidnight.setHours(0, 0, 0, 0);
-
-        // 💌 고정 알림 포스트잇 데이터
-        const FIXED_NOTICE = {
-            id: 'system-notice',
-            emotion: '🌱',
-            author: '마음날씨',
-            text: `반가워요! 이곳은 세상의 소음에서 잠시 벗어나 나의 내면을 마주하고, 서로의 온기를 나누는 소중한 공간이에요.\n\n누구에게도 말하지 못했던 속마음을 편안하게 꺼내어보세요. 익명의 품 안에서 우리는 무엇이든 솔직하게 이야기할 수 있답니다.\n\n혼자 짊어지기엔 너무 무거웠던 고민들도 이곳에서 조금씩 나누어 들어볼까요? 당신이 건네는 따뜻한 한 마디가 누군가에게는 오늘을 버티게 하는 커다란 행복이자 방패가 되어줄 거예요.\n\n바쁜 세상 속에서도 누군가는 반드시 당신을 응원하고 있다는 걸 기억해 주세요. 오늘도 당신의 하루를 진심으로 응원할게요!`,
-            colorIdx: 3,
-            isNotice: true
-        };
 
         btnAdmin.addEventListener('click', () => {
             if (!isAdminMode) {
@@ -263,10 +255,8 @@
 
             if(!name || !pw || !text) return alert("별칭, 비밀번호, 내용을 모두 입력해주세요.");
 
-            sendPushNotification("새로운 마음 날씨 도착! 💌", "학생들이 마음을 남겼어요.");
             writeModal.classList.add('hidden');
-            showToast("기록되었습니다!");
-
+            
             db.collection('posts').add({
                 emotion: selectedEmo,
                 author: name,
@@ -276,10 +266,10 @@
                 colorIdx: Math.floor(Math.random() * 5)
             }).then((docRef) => {
                 saveMyPost(docRef.id);
-            }).catch(err => console.log("저장 실패:", err));
+                showToast("기록되었습니다!");
+            }).catch(err => alert("저장에 실패했습니다."));
         });
 
-        // ✅ 포스트잇 생성 함수 (알림 포스트잇 포함)
         function createPostIt(id, data) {
             const div = document.createElement('div');
             div.className = `post-it color-${data.colorIdx}`;
@@ -304,22 +294,15 @@
           .orderBy('date', 'desc')
           .onSnapshot(snapshot => {
             board.innerHTML = '';
-            
-            // 1. 항상 첫 번째 자리에 고정 알림 추가
             board.appendChild(createPostIt(FIXED_NOTICE.id, FIXED_NOTICE));
 
-            if (snapshot.empty && !FIXED_NOTICE) {
-                board.innerHTML += '<div class="loading-msg" style="grid-column: 1/-1;">아직 오늘의 마음이 없어요.<br>가장 먼저 남겨보세요!</div>';
-                return;
-            }
-            
             snapshot.forEach(doc => {
                 const data = doc.data();
                 board.appendChild(createPostIt(doc.id, data));
                 if(isMyPost(doc.id)) checkComments(doc.id);
             });
         }, (error) => {
-            console.log("데이터 에러 무시");
+            console.error("Firebase Error: ", error);
         });
 
         function checkComments(postId) {
@@ -342,21 +325,18 @@
             document.getElementById('view-text').textContent = data.text;
             document.getElementById('view-author').textContent = `작성자: ${data.author}`;
             
-            // 알림 글인 경우 삭제 버튼 숨김 및 댓글 영역 조정
             if(data.isNotice) {
                 document.getElementById('delete-btn').classList.add('hidden');
+                document.getElementById('comments-list').innerHTML = '<p style="text-align:center; color:#888; font-size:0.9rem; padding:20px;">이 글은 안내문입니다. <br>따뜻한 하루 되세요! ✨</p>';
             } else {
-                if(isAdminMode) document.getElementById('delete-btn').classList.remove('hidden');
-                else document.getElementById('delete-btn').classList.remove('hidden'); // 비밀번호 확인 위해 일단 보이게 함
+                document.getElementById('delete-btn').classList.remove('hidden');
+                loadComments(id);
             }
-
             viewModal.classList.remove('hidden');
-            if(!data.isNotice) loadComments(id);
-            else document.getElementById('comments-list').innerHTML = '<p style="text-align:center; color:#888; font-size:0.9rem;">이 글은 안내문입니다. <br>따뜻한 하루 되세요! ✨</p>';
         }
 
         document.getElementById('delete-btn').addEventListener('click', () => {
-            if(currentDocData.isNotice) return;
+            if(!currentDocId || currentDocData.isNotice) return;
             if(!confirm("정말 삭제하시겠습니까?")) return;
             if(isAdminMode) {
                 db.collection('posts').doc(currentDocId).delete().then(() => {
@@ -375,22 +355,21 @@
         });
 
         document.getElementById('submit-comment').addEventListener('click', () => {
-            if(currentDocData && currentDocData.isNotice) return alert("안내글에는 댓글을 달 수 없습니다.");
+            if(!currentDocId || currentDocData.isNotice) return;
             const name = document.getElementById('comment-writer').value.trim();
             const pw = document.getElementById('comment-pw').value.trim();
             const text = document.getElementById('comment-input').value.trim();
             
-            if(!name || !pw || !text) return alert("입력 필요");
-
-            sendPushNotification("새 댓글 알림 💬", "누군가 댓글을 남겼어요.");
-            document.getElementById('comment-input').value = '';
-            showToast("댓글이 등록되었습니다.");
+            if(!name || !pw || !text) return alert("이름, 비번, 내용을 입력해주세요.");
 
             db.collection('posts').doc(currentDocId).collection('comments').add({
                 author: name,
                 password: pw,
                 text: text,
                 date: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                document.getElementById('comment-input').value = '';
+                showToast("댓글 등록!");
             });
         });
 
@@ -412,7 +391,7 @@
         }
 
         window.deleteComment = function(postId, commentId, commentPw) {
-            if(!confirm("삭제?")) return;
+            if(!confirm("댓글을 삭제할까요?")) return;
             if(isAdminMode) {
                 db.collection('posts').doc(postId).collection('comments').doc(commentId).delete();
                 return;
@@ -422,12 +401,6 @@
                 db.collection('posts').doc(postId).collection('comments').doc(commentId).delete();
             } else if (inputPw !== null) alert("오류");
         };
-
-        function showToast(msg) {
-            toast.textContent = msg;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
-        }
     </script>
 </body>
 </html>
