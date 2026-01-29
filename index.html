@@ -16,12 +16,23 @@
         .blob-2 { bottom: -50px; right: -50px; width: 300px; height: 300px; background: #a18cd1; }
         .blob-3 { top: 40%; left: 30%; width: 200px; height: 200px; background: #fad0c4; }
         .glass-header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; color: #333; z-index: 100; }
-        .logo { font-size: 1.2rem; font-weight: bold; }
+        .logo { font-size: 1.2rem; font-weight: bold; position: relative; }
         .admin-active { color: #ff6b6b !important; text-shadow: 0 0 5px rgba(255, 107, 107, 0.5); }
+        
+        /* 🔴 알림 배지 (헤더용) */
+        .noti-dot { position: absolute; top: -2px; right: -8px; width: 10px; height: 10px; background: #ff4757; border-radius: 50%; border: 2px solid white; display: none; }
+        .noti-active { display: block; animation: bounce 1s infinite; }
+        
         #board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 80px 20px 20px; max-width: 800px; margin: 0 auto; }
         .loading-msg { text-align: center; color: #888; margin-top: 50px; width: 100%; grid-column: 1 / -1; }
-        .post-it { padding: 15px; border-radius: 0 0 15px 0; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); cursor: pointer; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; border-top: 1px solid rgba(255,255,255,0.4); }
+        
+        .post-it { padding: 15px; border-radius: 0 0 15px 0; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); cursor: pointer; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; border-top: 1px solid rgba(255,255,255,0.4); position: relative; }
         .post-it:hover { transform: translateY(-5px); }
+        
+        /* 내 글 표시 & 댓글 알림 */
+        .my-post-tag { position: absolute; top: -5px; right: -5px; background: #333; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; z-index: 10; opacity: 0.8; }
+        .comment-badge { background: #ff4757; color: white; font-size: 0.8rem; padding: 3px 8px; border-radius: 20px; margin-top: 5px; text-align: center; font-weight: bold; animation: pulse 2s infinite; display: none; }
+
         .color-0 { background: #fff4bd; color: #5a4a10; } 
         .color-1 { background: #d4f0f0; color: #1e4a4a; } 
         .color-2 { background: #ffd6e7; color: #5a1e3a; } 
@@ -50,6 +61,9 @@
         #comment-writer, #comment-pw, #comment-input { padding: 10px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.9rem; }
         .icon-btn-send { background: none; border: none; color: #007bff; font-size: 1.2rem; cursor: pointer; padding: 5px; }
         .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; animation: fade 3s forwards; z-index: 300; }
+        
+        @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-3px);} }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
         @keyframes fade { 0% {opacity:0; margin-top:-10px;} 10% {opacity:1; margin-top:0;} 90% {opacity:1;} 100% {opacity:0;} }
     </style>
 </head>
@@ -61,6 +75,7 @@
     <header class="glass-header">
         <div class="logo">
             <i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음날씨
+            <div id="header-noti" class="noti-dot"></div>
         </div>
         <button id="btn-admin-mode" class="icon-btn" title="관리자 모드"><i class="fas fa-lock"></i></button>
     </header>
@@ -149,7 +164,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 🔔 JSON 방식 알림 (한글 깨짐 해결)
+        // 🔔 JSON 방식 알림
         function sendPushNotification(title, message) {
             fetch('https://ntfy.sh/', {
                 method: 'POST',
@@ -160,8 +175,19 @@
                     tags: ['heart_decoration'], 
                     priority: 3
                 })
-            }).then(() => console.log("알림 전송 성공"))
-            .catch(err => console.log("알림 실패:", err));
+            }).catch(err => console.log("알림 실패:", err));
+        }
+
+        // 💾 [내 글 저장 기능]
+        function saveMyPost(docId) {
+            let myPosts = JSON.parse(localStorage.getItem('my_posts') || '[]');
+            myPosts.push(docId);
+            localStorage.setItem('my_posts', JSON.stringify(myPosts));
+        }
+
+        function isMyPost(docId) {
+            let myPosts = JSON.parse(localStorage.getItem('my_posts') || '[]');
+            return myPosts.includes(docId);
         }
 
         let isAdminMode = false;
@@ -216,6 +242,7 @@
         document.getElementById('close-write').addEventListener('click', () => writeModal.classList.add('hidden'));
         document.getElementById('close-view').addEventListener('click', () => viewModal.classList.add('hidden'));
 
+        // [저장 버튼]
         document.getElementById('submit-post').addEventListener('click', () => {
             const name = document.getElementById('writer-name').value.trim();
             const pw = document.getElementById('writer-pw').value.trim();
@@ -224,7 +251,7 @@
             if(!name || !pw || !text) return alert("별칭, 비밀번호, 내용을 모두 입력해주세요.");
 
             // 1. 알림 전송
-            sendPushNotification("새로운 마음 날씨 도착! 💌", "학생들이 마음을 남겼어요. 확인해보세요!");
+            sendPushNotification("새로운 마음 날씨 도착! 💌", "학생들이 마음을 남겼어요.");
             
             writeModal.classList.add('hidden');
             showToast("기록되었습니다!");
@@ -237,11 +264,15 @@
                 text: text,
                 date: firebase.firestore.FieldValue.serverTimestamp(),
                 colorIdx: Math.floor(Math.random() * 5)
+            }).then((docRef) => {
+                // ✅ 중요: 내가 쓴 글 ID 저장
+                saveMyPost(docRef.id);
             }).catch(err => {
-                console.log("저장 실패 (알림은 갔음):", err);
+                console.log("저장 실패:", err);
             });
         });
 
+        // 목록 불러오기
         db.collection('posts')
           .where('date', '>=', todayMidnight) 
           .orderBy('date', 'desc')
@@ -255,17 +286,46 @@
                 const data = doc.data();
                 const div = document.createElement('div');
                 div.className = `post-it color-${data.colorIdx}`;
+                
+                // 내 글인지 확인
+                let myTag = '';
+                if(isMyPost(doc.id)) {
+                    myTag = '<div class="my-post-tag">내 글</div>';
+                }
+
                 div.innerHTML = `
+                    ${myTag}
                     <div class="post-emoji">${data.emotion}</div>
                     <div class="post-text">${data.text}</div>
                     <div class="post-author">From. ${data.author}</div>
+                    <div id="badge-${doc.id}" class="comment-badge">🔔 댓글 도착!</div>
                 `;
                 div.addEventListener('click', () => openDetail(doc.id, data));
                 board.appendChild(div);
+
+                // ✅ 내 글이면 댓글 확인하기
+                if(isMyPost(doc.id)) {
+                    checkComments(doc.id);
+                }
             });
         }, (error) => {
             console.log("데이터 에러 무시");
         });
+
+        // 🔔 댓글 확인 함수
+        function checkComments(postId) {
+            db.collection('posts').doc(postId).collection('comments').onSnapshot(snap => {
+                if(!snap.empty) {
+                    // 댓글이 있으면 알림 표시
+                    const badge = document.getElementById(`badge-${postId}`);
+                    if(badge) badge.style.display = 'block';
+                    
+                    // 헤더 빨간 점 켜기
+                    document.getElementById('header-noti').classList.add('noti-active');
+                    showToast("내 글에 새로운 댓글이 있어요!");
+                }
+            });
+        }
 
         let currentDocId = null;
         let currentDocData = null;
