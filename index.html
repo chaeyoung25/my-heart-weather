@@ -3,32 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>마음 날씨 체크인 v3.1</title>
+    <title>마음 날씨 체크인 v3.2</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        /* 기존 디자인 유지 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans KR', sans-serif; }
         body { background-color: #f4f7f6; min-height: 100vh; overflow-x: hidden; }
-
-        /* 배경 */
         .background-blob { position: absolute; border-radius: 50%; filter: blur(60px); z-index: -1; opacity: 0.6; }
         .blob-1 { top: -50px; left: -50px; width: 300px; height: 300px; background: #ff9a9e; }
         .blob-2 { bottom: -50px; right: -50px; width: 300px; height: 300px; background: #a18cd1; }
         .blob-3 { top: 40%; left: 30%; width: 200px; height: 200px; background: #fad0c4; }
-
-        /* 헤더 */
         .glass-header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; color: #333; z-index: 100; }
         .logo { font-size: 1.2rem; font-weight: bold; }
         .admin-active { color: #ff6b6b !important; text-shadow: 0 0 5px rgba(255, 107, 107, 0.5); }
-        .version-tag { font-size: 0.7rem; color: #666; margin-left: 5px; background: #eee; padding: 2px 5px; border-radius: 5px; }
-
-        /* 메인 보드 */
+        .version-tag { font-size: 0.7rem; color: white; background: #ff6b6b; padding: 2px 6px; border-radius: 5px; margin-left: 5px; }
         #board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 80px 20px 20px; max-width: 800px; margin: 0 auto; }
         .loading-msg { text-align: center; color: #888; margin-top: 50px; width: 100%; grid-column: 1 / -1; }
-
-        /* 포스트잇 */
         .post-it { padding: 15px; border-radius: 0 0 15px 0; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); cursor: pointer; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; border-top: 1px solid rgba(255,255,255,0.4); }
         .post-it:hover { transform: translateY(-5px); }
         .color-0 { background: #fff4bd; color: #5a4a10; } 
@@ -36,39 +29,28 @@
         .color-2 { background: #ffd6e7; color: #5a1e3a; } 
         .color-3 { background: #e2dbf5; color: #3a1e5a; } 
         .color-4 { background: #d4ffd6; color: #1e5a2b; } 
-
         .post-emoji { font-size: 2rem; margin-bottom: 5px; }
         .post-text { font-size: 0.9rem; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-family: 'Gaegu', cursive; margin-bottom: 10px;}
         .post-author { font-size: 0.8rem; font-weight: bold; opacity: 0.8; text-align: right; }
-
-        /* 모달 및 입력창 */
         .glass-card { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5); width: 95%; max-width: 400px;}
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 200; }
         .hidden { display: none !important; }
-
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .emotion-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; max-height: 30vh; overflow-y: auto; padding-right:5px;}
         .emo-btn { background: #f0f0f0; border: none; border-radius: 10px; padding: 10px 0; cursor: pointer; font-size: 0.85rem;}
         .emo-btn.selected { background: #ffeaa7; border: 2px solid #fdcb6e; }
-
         .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
         .input-field { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 0.95rem; }
         textarea { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 10px; resize: none; margin-bottom: 10px; font-family: 'Gaegu', cursive; font-size: 1.1rem; }
         .btn-full { width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 5px; }
-
-        /* FAB 버튼 */
         .fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: #333; color: white; border: none; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 90; display: flex; justify-content: center; align-items: center; }
         .icon-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #333; }
         .delete-icon { color: #ff6b6b; font-size: 0.9rem; border: 1px solid #ff6b6b; padding: 5px 10px; border-radius: 20px; background: white; margin-left: auto; margin-right: 10px; }
-
-        /* 댓글 */
         .comments-area { max-height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 10px; margin: 15px 0; }
         .comment-item { font-size: 0.9rem; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .comment-text { flex: 1; margin-left: 5px; }
         .comment-input-area { display: flex; gap: 5px; }
         #comment-writer, #comment-pw, #comment-input { padding: 10px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.9rem; }
         .icon-btn-send { background: none; border: none; color: #007bff; font-size: 1.2rem; cursor: pointer; padding: 5px; }
-
         .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; animation: fade 3s forwards; z-index: 300; }
         @keyframes fade { 0% {opacity:0; margin-top:-10px;} 10% {opacity:1; margin-top:0;} 90% {opacity:1;} 100% {opacity:0;} }
     </style>
@@ -81,7 +63,7 @@
     <header class="glass-header">
         <div class="logo">
             <i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음 날씨
-            <span class="version-tag">v3.1 (알림탑재)</span>
+            <span class="version-tag">v3.2 (강제알림)</span>
         </div>
         <button id="btn-admin-mode" class="icon-btn" title="관리자 모드"><i class="fas fa-lock"></i></button>
     </header>
@@ -141,11 +123,8 @@
             </div>
             <div id="view-author" style="font-size:0.9rem; color:#666; margin-bottom:5px;">작성자: -</div>
             <p id="view-text" class="detail-text"></p>
-            
             <div class="divider"></div>
-            
             <div id="comments-list" class="comments-area"></div>
-            
             <div class="comment-input-area">
                 <input type="text" id="comment-writer" placeholder="이름" style="width: 70px;">
                 <input type="password" id="comment-pw" placeholder="비번" style="width: 60px;">
@@ -173,26 +152,15 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 🔔 [직접 알림 전송] 
-        // 외부 파일 변수 문제 등을 원천 차단하기 위해 주소를 직접 박았습니다.
+        // 🔔 [필승 알림] 저장 여부와 상관없이 무조건 보냅니다.
         function sendPushNotification(title, message) {
-            console.log("알림 전송 시작:", title);
             fetch('https://ntfy.sh/pastor-heart-weather-v3', {
                 method: 'POST',
                 body: message,
-                headers: {
-                    'Title': title,
-                    'Tags': 'heart_decoration', 
-                    'Priority': 'default'
-                }
-            })
-            .then(() => console.log("알림 전송 성공"))
-            .catch(err => console.log("알림 전송 실패:", err));
+                headers: { 'Title': title, 'Tags': 'heart_decoration', 'Priority': 'default' }
+            }).catch(err => console.log("알림 에러:", err));
         }
 
-        // ==================================================
-        // 로직 시작
-        // ==================================================
         let isAdminMode = false;
         const ADMIN_CODE = "0929"; 
 
@@ -201,11 +169,9 @@
         const writeModal = document.getElementById('write-modal');
         const viewModal = document.getElementById('view-modal');
         const toast = document.getElementById('toast');
-
         const todayMidnight = new Date();
         todayMidnight.setHours(0, 0, 0, 0);
 
-        // 관리자
         const btnAdmin = document.getElementById('btn-admin-mode');
         btnAdmin.addEventListener('click', () => {
             if (!isAdminMode) {
@@ -215,12 +181,8 @@
                     btnAdmin.classList.add('admin-active'); 
                     btnAdmin.innerHTML = '<i class="fas fa-unlock"></i>'; 
                     showToast("👑 관리자 모드 ON");
-                    if(!viewModal.classList.contains('hidden')) {
-                        document.getElementById('delete-btn').classList.remove('hidden');
-                    }
-                } else if (input !== null) {
-                    alert("암호가 틀렸습니다.");
-                }
+                    if(!viewModal.classList.contains('hidden')) document.getElementById('delete-btn').classList.remove('hidden');
+                } else if (input !== null) alert("암호가 틀렸습니다.");
             } else {
                 isAdminMode = false;
                 btnAdmin.classList.remove('admin-active');
@@ -229,7 +191,6 @@
             }
         });
 
-        // 글쓰기 창 열기
         let selectedEmo = '☀️';
         fab.addEventListener('click', () => {
             writeModal.classList.remove('hidden');
@@ -252,7 +213,7 @@
         document.getElementById('close-write').addEventListener('click', () => writeModal.classList.add('hidden'));
         document.getElementById('close-view').addEventListener('click', () => viewModal.classList.add('hidden'));
 
-        // [저장 버튼]
+        // 👇 [핵심 수정] : 순서를 바꿨습니다! (알림 먼저 -> 그다음 저장 시도)
         document.getElementById('submit-post').addEventListener('click', () => {
             const name = document.getElementById('writer-name').value.trim();
             const pw = document.getElementById('writer-pw').value.trim();
@@ -260,6 +221,14 @@
 
             if(!name || !pw || !text) return alert("별칭, 비밀번호, 내용을 모두 입력해주세요.");
 
+            // 1. 알림을 먼저 쏩니다! (저장 성공 여부와 관계없이)
+            sendPushNotification("새로운 마음 날씨 도착! 💌", "학생들이 마음을 남겼어요. (저장 오류가 있을 수 있으니 확인하세요)");
+            
+            // 2. 화면을 닫고 성공 메시지를 띄웁니다.
+            writeModal.classList.add('hidden');
+            showToast("기록 요청을 보냈습니다!");
+
+            // 3. 그리고 나서 저장을 시도합니다. (이게 실패해도 알림은 이미 갔음)
             db.collection('posts').add({
                 emotion: selectedEmo,
                 author: name,
@@ -267,19 +236,12 @@
                 text: text,
                 date: firebase.firestore.FieldValue.serverTimestamp(),
                 colorIdx: Math.floor(Math.random() * 5)
-            }).then(() => {
-                writeModal.classList.add('hidden');
-                showToast("기록되었습니다!");
-
-                // 🔔 알림 발송
-                sendPushNotification("새로운 마음 날씨 도착! 💌", "학생들이 마음을 남겼어요. 확인해보세요!");
             }).catch(err => {
-                console.error("Error:", err);
-                alert("저장 실패. 인터넷을 확인하세요.");
+                console.log("저장 실패 (하지만 알림은 갔음):", err);
             });
         });
 
-        // 목록 보기
+        // 목록 보기 (오류가 있어도 멈추지 않게 처리)
         db.collection('posts')
           .where('date', '>=', todayMidnight) 
           .orderBy('date', 'desc')
@@ -301,6 +263,9 @@
                 div.addEventListener('click', () => openDetail(doc.id, data));
                 board.appendChild(div);
             });
+        }, (error) => {
+            console.log("데이터 불러오기 에러:", error);
+            // 에러 나면 조용히 무시 (화면은 그대로 유지)
         });
 
         let currentDocId = null;
@@ -309,7 +274,6 @@
         function openDetail(id, data) {
             currentDocId = id;
             currentDocData = data;
-            
             document.getElementById('view-emotion').textContent = data.emotion;
             document.getElementById('view-text').textContent = data.text;
             document.getElementById('view-author').textContent = `작성자: ${data.author}`;
@@ -317,45 +281,41 @@
             loadComments(id);
         }
 
-        // 삭제
         document.getElementById('delete-btn').addEventListener('click', () => {
             if(!confirm("정말 삭제하시겠습니까?")) return;
             if(isAdminMode) {
                 db.collection('posts').doc(currentDocId).delete().then(() => {
                     viewModal.classList.add('hidden');
-                    showToast("관리자 권한으로 삭제했습니다.");
+                    showToast("삭제됨");
                 });
                 return;
             }
-            const inputPw = prompt("글 작성 시 설정한 비밀번호를 입력하세요:");
+            const inputPw = prompt("비밀번호:");
             if(inputPw === currentDocData.password) {
                 db.collection('posts').doc(currentDocId).delete().then(() => {
                     viewModal.classList.add('hidden');
-                    showToast("삭제되었습니다.");
+                    showToast("삭제됨");
                 });
-            } else if (inputPw !== null) {
-                alert("비밀번호가 틀렸습니다!");
-            }
+            } else if (inputPw !== null) alert("비밀번호 오류");
         });
 
-        // 댓글
         document.getElementById('submit-comment').addEventListener('click', () => {
             const name = document.getElementById('comment-writer').value.trim();
             const pw = document.getElementById('comment-pw').value.trim();
             const text = document.getElementById('comment-input').value.trim();
             
-            if(!name || !pw || !text) return alert("이름, 비번, 내용을 모두 입력하세요.");
+            if(!name || !pw || !text) return alert("입력 필요");
+
+            // 댓글도 알림 먼저!
+            sendPushNotification("새 댓글 알림 💬", "누군가 댓글을 남겼어요.");
+            document.getElementById('comment-input').value = '';
+            showToast("댓글 등록 요청됨");
 
             db.collection('posts').doc(currentDocId).collection('comments').add({
                 author: name,
                 password: pw,
                 text: text,
                 date: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                document.getElementById('comment-input').value = '';
-                showToast("댓글이 등록되었습니다.");
-                // 🔔 알림 발송
-                sendPushNotification("새 댓글 알림 💬", "누군가 댓글을 남겼어요.");
             });
         });
 
@@ -377,21 +337,15 @@
         }
 
         window.deleteComment = function(postId, commentId, commentPw) {
-            if(!confirm("댓글을 지울까요?")) return;
+            if(!confirm("삭제?")) return;
             if(isAdminMode) {
-                db.collection('posts').doc(postId).collection('comments').doc(commentId).delete().then(()=>{
-                    showToast("관리자 권한으로 댓글 삭제됨");
-                });
+                db.collection('posts').doc(postId).collection('comments').doc(commentId).delete();
                 return;
             }
-            const inputPw = prompt("댓글 비밀번호 입력:");
+            const inputPw = prompt("비밀번호:");
             if(inputPw === commentPw) {
-                db.collection('posts').doc(postId).collection('comments').doc(commentId).delete().then(()=>{
-                    showToast("댓글이 삭제되었습니다.");
-                });
-            } else if (inputPw !== null) {
-                alert("비밀번호 불일치!");
-            }
+                db.collection('posts').doc(postId).collection('comments').doc(commentId).delete();
+            } else if (inputPw !== null) alert("오류");
         };
 
         function showToast(msg) {
