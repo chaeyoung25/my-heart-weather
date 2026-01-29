@@ -135,7 +135,7 @@
                 <button class="close-btn" id="close-view" style="font-size:1.5rem; border:none; background:none; cursor:pointer;">&times;</button>
             </div>
             <div id="view-author" style="font-size:0.9rem; color:#666; margin-bottom:5px;">작성자: -</div>
-            <p id="view-text" class="detail-text" style="font-family:'Gaegu', cursive; font-size:1.2rem; line-height:1.6; white-space:pre-wrap; margin-bottom:15px;"></p>
+            <p id="view-text" class="detail-text" style="font-family:'Gaegu', cursive; font-size:1.1rem; line-height:1.6; white-space:pre-wrap; margin-bottom:15px;"></p>
             
             <div id="comments-list" class="comments-area"></div>
             
@@ -170,7 +170,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // [변수 선언부] - 누락되었던 btnAdmin 추가
         const board = document.getElementById('board-container');
         const fab = document.getElementById('fab-write');
         const writeModal = document.getElementById('write-modal');
@@ -183,11 +182,12 @@
         let isAdminMode = false;
         const ADMIN_CODE = "0929"; 
 
+        // 💌 요청하신 따뜻한 안내 문구로 업데이트
         const FIXED_NOTICE = {
             id: 'system-notice',
             emotion: '🌱',
             author: '마음날씨',
-            text: `반가워요! 이곳은 세상의 소음에서 잠시 벗어나 나의 내면을 마주하고, 서로의 온기를 나누는 소중한 공간이에요.\n\n누구에게도 말하지 못했던 속마음을 편안하게 꺼내어보세요. 익명의 품 안에서 우리는 무엇이든 솔직하게 이야기할 수 있답니다.\n\n혼자 짊어지기엔 너무 무거웠던 고민들도 이곳에서 조금씩 나누어 들어볼까요? 당신이 건네는 따뜻한 한 마디가 누군가에게는 오늘을 버티게 하는 커다란 행복이자 방패가 되어줄 거예요.\n\n바쁜 세상 속에서도 누군가는 반드시 당신을 응원하고 있다는 걸 기억해 주세요. 오늘도 당신의 하루를 진심으로 응원할게요!`,
+            text: `당신의 마음이 잠시 쉬어갈 수 있는 곳, **'마음날씨 체크인'**에 오신 걸 환영해요. 이곳은 세상의 소음에서 잠시 벗어나 나의 내면을 가만히 마주하고, 서로의 온기를 나누는 소중한 공간이에요.\n\n🌱 우리가 여기서 만나는 이유\n- 가장 나다운 모습으로: 누구에게도 말하지 못했던 속마음을 편안하게 꺼내어보세요. 익명의 품 안에서 우리는 무엇이든 솔직하게 이야기할 수 있어요.\n- 함께 나누는 삶의 무게: 혼자 짊어지기엔 너무 무거웠던 고민과 걱정들, 이제는 우리 조금씩 나누어 들어볼까요? 함께 나누는 것만으로도 마음의 짐은 훨씬 가벼워질 거예요.\n- 작은 틈으로 스며드는 소망: 유난히 괴롭고 힘든 날, 이곳에 남겨진 따뜻한 글들을 보며 다시 시작할 용기와 소망을 얻어 가셨으면 좋겠어요.\n\n🎈 함께 온기를 나누는 방법\n- 다정한 시선으로 바라보기: 다른 이들의 마음 날씨를 찬찬히 살펴보며 공감과 위로, 축하의 마음을 건네주세요.\n- 선물 같은 댓글 한 마디: 당신이 정성스레 남긴 따뜻한 한 마디가 누군가에게는 오늘 하루를 버티게 하는 커다란 행복이자 방패가 되어준답니다.\n- 나를 향한 응원 확인하기: 내 글에 달린 댓글이 있는지 확인해 보세요. 그 속에 담긴 진심 어린 격려를 마주할 때, 우리 마음엔 다시금 힘이 생겨날 거예요.\n\n바쁘게 돌아가는 세상 속에서도, 누군가는 반드시 당신을 마음 다해 응원하고 있다는 걸 꼭 기억해 주세요. 우리 서로가 주고받는 다정한 말들로 인해 오늘 하루가 조금 더 반짝이고 행복해졌으면 좋겠습니다.\n\n나는 오늘도, 이름 모를 당신의 하루를 진심으로 응원할게요.`,
             colorIdx: 3,
             isNotice: true
         };
