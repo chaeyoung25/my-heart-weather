@@ -20,6 +20,7 @@
         .glass-header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 100; }
         .logo { font-size: 1.2rem; font-weight: bold; color: #333; position: relative; }
         .admin-active { color: #ff6b6b !important; text-shadow: 0 0 5px rgba(255, 107, 107, 0.5); }
+        
         /* 알림 배지 */
         .noti-dot { position: absolute; top: -2px; right: -8px; width: 10px; height: 10px; background: #ff4757; border-radius: 50%; border: 2px solid white; display: none; }
         .noti-active { display: block; animation: bounce 1s infinite; }
@@ -158,20 +159,17 @@
         const viewModal = document.getElementById('view-modal');
         const btnAdmin = document.getElementById('btn-admin-mode');
         
-        // 오늘 날짜 (00:00:00) 계산
-        const todayMidnight = new Date(); 
-        todayMidnight.setHours(0, 0, 0, 0);
-        
-        // 안내문용 날짜 ID (예: notice-2024-01-30) - 매일 새로 생성됨
+        // 오늘 날짜 계산 (안내문 ID 생성용)
+        const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
         const noticeId = "notice-" + todayMidnight.toISOString().split('T')[0];
 
         let isAdminMode = false;
         let selectedEmo = '☀️';
         let currentDocId = null;
         let currentDocData = null;
-        let unsubscribeComments = null; // 🔔 댓글 리스너 해제용
+        let unsubscribeComments = null; // 🔔 댓글 연결 제어 변수
 
-        // 🔔 알림 전송 함수 (안전한 JSON 방식)
+        // 🔔 알림 전송 함수 (JSON 방식 + 메인 주소)
         function sendPushNotification(title, message) {
             fetch('https://ntfy.sh/', {
                 method: 'POST',
@@ -203,16 +201,20 @@
             <p style="text-align:center; margin-top:10px; font-weight:bold;">나는 오늘도, <br>이름 모름 당신의 하루를 진심으로 응원할게요.</p>
         `;
 
-        // 🧹 [핵심] 창 닫을 때 이전 댓글 연결 끊기
+        // 🧹 [핵심 수정] 창 닫을 때 무조건 기존 연결 끊기
         window.closeAllModals = function() {
             writeModal.classList.remove('show');
             viewModal.classList.remove('show');
             document.body.style.overflow = 'auto';
-            if (unsubscribeComments) { unsubscribeComments(); unsubscribeComments = null; }
+            if (unsubscribeComments) { 
+                unsubscribeComments(); 
+                unsubscribeComments = null; 
+            }
         };
 
+        // 📂 모달 열기 (강제 청소 후 열기)
         function openModal(modal) {
-            closeAllModals(); // 기존 창 닫으면서 연결도 끊음
+            closeAllModals(); // 기존 창 닫으면서 연결도 확실히 끊음
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
             modal.scrollTop = 0;
@@ -251,32 +253,36 @@
             return myPosts.includes(docId);
         }
 
+        // 📝 메인 게시판 로딩
         db.collection('posts').where('date', '>=', todayMidnight).orderBy('date', 'desc').onSnapshot(snap => {
             board.innerHTML = '';
             
-            // 📌 [안내 포스트잇] - 매일 ID가 바뀌어서 댓글도 초기화됨
+            // 📌 [안내 포스트잇] (댓글 가능, 매일 초기화)
             const notice = document.createElement('div');
             notice.className = "post-it color-3";
             notice.innerHTML = `<div class="notice-tag">✨ 마음의 쉼표</div><div class="post-emoji">🌱</div><div class="post-text">마음날씨 체크인에 오신 걸 환영해요! 클릭해서 안내문을 읽어보세요.</div><div class="post-author">From. 마음날씨</div>`;
             notice.onclick = () => {
-                // 1. 안내문 내용 채우기
-                currentDocId = noticeId; // 날짜 기반 ID 사용
+                // 1. 순서 중요: 먼저 창을 열면서 기존 연결을 끊습니다.
+                openModal(viewModal);
+
+                // 2. 내용 채우기
+                currentDocId = noticeId;
                 currentDocData = { isNotice: true, emotion: '🌱', author: '마음날씨' };
                 document.getElementById('view-emotion').textContent = '🌱';
                 document.getElementById('view-author').textContent = '작성자: 마음날씨';
                 document.getElementById('view-content').innerHTML = NOTICE_HTML;
                 document.getElementById('view-content').style.fontFamily = "'Noto Sans KR', sans-serif";
                 
-                // 2. 안내문은 삭제 버튼 숨기고 댓글창은 보여줌
+                // 3. 안내문은 삭제 버튼 숨기고 댓글창은 보여줌
                 document.getElementById('delete-btn').classList.add('hidden');
                 document.getElementById('comment-section').classList.remove('hidden');
                 
-                // 3. 댓글 로드 (청소 포함)
+                // 4. 이제 댓글을 불러옵니다. (깨끗한 상태에서)
                 loadComments(noticeId);
-                openModal(viewModal);
             };
             board.appendChild(notice);
 
+            // 일반 게시글
             snap.forEach(doc => {
                 const data = doc.data();
                 const post = document.createElement('div');
@@ -288,17 +294,22 @@
                 post.innerHTML = `${myTag}<div class="post-emoji">${data.emotion}</div><div class="post-text">${data.text}</div><div class="post-author">From. ${data.author}</div><div id="badge-${doc.id}" class="comment-badge">🔔 댓글 도착!</div>`;
                 
                 post.onclick = () => {
+                    // 1. 순서 중요: 먼저 창을 엽니다 (청소)
+                    openModal(viewModal);
+
+                    // 2. 내용 채우기
                     currentDocId = doc.id; currentDocData = data;
                     document.getElementById('view-emotion').textContent = data.emotion;
                     document.getElementById('view-author').textContent = `작성자: ${data.author}`;
                     document.getElementById('view-content').textContent = data.text;
                     document.getElementById('view-content').style.fontFamily = "'Gaegu', cursive";
                     
+                    // 3. 버튼 보이기
                     document.getElementById('delete-btn').classList.remove('hidden');
                     document.getElementById('comment-section').classList.remove('hidden');
                     
-                    loadComments(doc.id); // 🧹 기존 댓글 지우고 새로 로드
-                    openModal(viewModal);
+                    // 4. 댓글 로드
+                    loadComments(doc.id); 
                 };
                 board.appendChild(post);
 
@@ -306,7 +317,7 @@
             });
         });
 
-        // 🔔 내 글 댓글 확인
+        // 🔔 내 글 댓글 확인 (배지용)
         function checkComments(postId) {
             db.collection('posts').doc(postId).collection('comments').onSnapshot(snap => {
                 if(!snap.empty) {
@@ -339,7 +350,6 @@
             const text = document.getElementById('post-text').value.trim();
             if(!name || !pw || !text) return alert("모든 항목을 입력해주세요.");
             
-            // 알림 발송
             sendPushNotification("새로운 마음 날씨 도착! 💌", `${name}님이 마음을 남겼어요: ${text}`);
 
             db.collection('posts').add({
@@ -375,7 +385,6 @@
 
             sendPushNotification("새 댓글 알림 💬", `${name}님이 댓글을 남겼어요: ${text}`);
 
-            // 일반 글이든 안내문(noticeId)이든 currentDocId에 저장됨
             db.collection('posts').doc(currentDocId).collection('comments').add({
                 author: name, password: pw, text: text,
                 date: firebase.firestore.FieldValue.serverTimestamp()
@@ -385,18 +394,18 @@
             });
         };
 
-        // 🧹 댓글 로드 (청소 기능 포함)
+        // 🧹 댓글 로드 (핵심 수정됨)
         function loadComments(id) {
-            // 1. 기존 연결 끊기
+            // 1. 안전장치: 혹시라도 연결이 남아있으면 끊기
             if (unsubscribeComments) unsubscribeComments();
             
             // 2. 화면 비우기 (잔상 제거)
             const list = document.getElementById('comments-list');
             list.innerHTML = ''; 
 
-            // 3. 새 연결 시작
+            // 3. 새 구독 시작
             unsubscribeComments = db.collection('posts').doc(id).collection('comments').orderBy('date').onSnapshot(snap => {
-                list.innerHTML = '';
+                list.innerHTML = ''; // 데이터 들어올 때마다 새로 그리기
                 if(snap.empty) { list.innerHTML = '<p style="text-align:center; color:#ccc; font-size:0.85rem;">첫 응원의 댓글을 남겨보세요.</p>'; return; }
                 snap.forEach(d => {
                     const c = d.data();
