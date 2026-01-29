@@ -17,11 +17,17 @@
         .blob-3 { top: 40%; left: 30%; width: 200px; height: 200px; background: #fad0c4; }
         .glass-header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; color: #333; z-index: 100; }
         .logo { font-size: 1.2rem; font-weight: bold; position: relative; }
+        .header-right { display: flex; align-items: center; gap: 15px; } /* 버튼 그룹화 */
         .admin-active { color: #ff6b6b !important; text-shadow: 0 0 5px rgba(255, 107, 107, 0.5); }
         
         .noti-dot { position: absolute; top: -2px; right: -8px; width: 10px; height: 10px; background: #ff4757; border-radius: 50%; border: 2px solid white; display: none; }
         .noti-active { display: block; animation: bounce 1s infinite; }
         
+        /* 🎵 음악 버튼 스타일 */
+        .music-btn { font-size: 1.1rem; color: #333; cursor: pointer; background: none; border: none; transition: transform 0.2s; }
+        .music-playing { color: #00b894; animation: spin 4s linear infinite; } 
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
         #board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 80px 20px 20px; max-width: 800px; margin: 0 auto; }
         .loading-msg { text-align: center; color: #888; margin-top: 50px; width: 100%; grid-column: 1 / -1; }
         
@@ -60,7 +66,6 @@
         .icon-btn-send { background: none; border: none; color: #007bff; font-size: 1.2rem; cursor: pointer; padding: 5px; }
         .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; animation: fade 3s forwards; z-index: 300; }
         
-        /* 💖 캠페인 문구 스타일 */
         .campaign-text { text-align: center; font-size: 0.85rem; color: #888; font-family: 'Gaegu', cursive; margin-bottom: 8px; margin-top: 5px; }
 
         @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-3px);} }
@@ -73,12 +78,24 @@
     <div class="background-blob blob-2"></div>
     <div class="background-blob blob-3"></div>
 
+    <audio id="bgm" loop>
+        <source src="https://archive.org/download/GymnopedieNo.1/Gymnopedie%20No.%201.mp3" type="audio/mpeg">
+    </audio>
+
     <header class="glass-header">
         <div class="logo">
             <i class="fas fa-heart" style="color:#ff6b6b;"></i> 마음날씨
             <div id="header-noti" class="noti-dot"></div>
         </div>
-        <button id="btn-admin-mode" class="icon-btn" title="관리자 모드"><i class="fas fa-lock"></i></button>
+        
+        <div class="header-right">
+            <button id="btn-music" class="music-btn" title="배경음악 ON/OFF">
+                <i class="fas fa-music"></i>
+            </button>
+            <button id="btn-admin-mode" class="icon-btn" title="관리자 모드">
+                <i class="fas fa-lock"></i>
+            </button>
+        </div>
     </header>
 
     <main id="board-container">
@@ -185,6 +202,36 @@
             }).catch(err => console.log("알림 실패:", err));
         }
 
+        // 🎵 배경음악 제어 (자동재생 시도)
+        const bgm = document.getElementById('bgm');
+        const btnMusic = document.getElementById('btn-music');
+        let isMusicPlaying = false;
+        
+        bgm.volume = 0.5; // 볼륨 50%
+
+        // 음악 버튼 클릭 시 토글
+        btnMusic.addEventListener('click', () => {
+            if (bgm.paused) {
+                bgm.play();
+                btnMusic.classList.add('music-playing');
+                isMusicPlaying = true;
+            } else {
+                bgm.pause();
+                btnMusic.classList.remove('music-playing');
+                isMusicPlaying = false;
+            }
+        });
+
+        // 🚀 자동 재생 (첫 클릭 시 무조건 재생)
+        document.body.addEventListener('click', () => {
+            if(!isMusicPlaying) {
+                bgm.play().then(() => {
+                    isMusicPlaying = true;
+                    btnMusic.classList.add('music-playing');
+                }).catch(e => console.log("아직 재생 안됨"));
+            }
+        }, { once: true }); // 딱 한번만 실행
+
         // 💾 [내 글 저장 기능]
         function saveMyPost(docId) {
             let myPosts = JSON.parse(localStorage.getItem('my_posts') || '[]');
@@ -257,13 +304,11 @@
 
             if(!name || !pw || !text) return alert("별칭, 비밀번호, 내용을 모두 입력해주세요.");
 
-            // 1. 알림 전송
             sendPushNotification("새로운 마음 날씨 도착! 💌", "학생들이 마음을 남겼어요.");
             
             writeModal.classList.add('hidden');
             showToast("기록되었습니다!");
 
-            // 2. 저장 시도
             db.collection('posts').add({
                 emotion: selectedEmo,
                 author: name,
@@ -272,7 +317,6 @@
                 date: firebase.firestore.FieldValue.serverTimestamp(),
                 colorIdx: Math.floor(Math.random() * 5)
             }).then((docRef) => {
-                // ✅ 내가 쓴 글 ID 저장
                 saveMyPost(docRef.id);
             }).catch(err => {
                 console.log("저장 실패:", err);
@@ -294,7 +338,6 @@
                 const div = document.createElement('div');
                 div.className = `post-it color-${data.colorIdx}`;
                 
-                // 내 글인지 확인
                 let myTag = '';
                 if(isMyPost(doc.id)) {
                     myTag = '<div class="my-post-tag">내 글</div>';
@@ -310,7 +353,6 @@
                 div.addEventListener('click', () => openDetail(doc.id, data));
                 board.appendChild(div);
 
-                // ✅ 내 글이면 댓글 확인하기
                 if(isMyPost(doc.id)) {
                     checkComments(doc.id);
                 }
@@ -319,15 +361,11 @@
             console.log("데이터 에러 무시");
         });
 
-        // 🔔 댓글 확인 함수
         function checkComments(postId) {
             db.collection('posts').doc(postId).collection('comments').onSnapshot(snap => {
                 if(!snap.empty) {
-                    // 댓글이 있으면 알림 표시
                     const badge = document.getElementById(`badge-${postId}`);
                     if(badge) badge.style.display = 'block';
-                    
-                    // 헤더 빨간 점 켜기
                     document.getElementById('header-noti').classList.add('noti-active');
                 }
             });
