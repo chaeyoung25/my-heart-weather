@@ -17,13 +17,13 @@
         .blob-3 { top: 40%; left: 30%; width: 200px; height: 200px; background: #fad0c4; }
         .glass-header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; color: #333; z-index: 100; }
         .logo { font-size: 1.2rem; font-weight: bold; position: relative; }
-        .header-right { display: flex; align-items: center; gap: 15px; } /* 버튼 그룹화 */
+        .header-right { display: flex; align-items: center; gap: 15px; } 
         .admin-active { color: #ff6b6b !important; text-shadow: 0 0 5px rgba(255, 107, 107, 0.5); }
         
         .noti-dot { position: absolute; top: -2px; right: -8px; width: 10px; height: 10px; background: #ff4757; border-radius: 50%; border: 2px solid white; display: none; }
         .noti-active { display: block; animation: bounce 1s infinite; }
         
-        /* 🎵 음악 버튼 스타일 */
+        /* 🎵 음악 버튼 */
         .music-btn { font-size: 1.1rem; color: #333; cursor: pointer; background: none; border: none; transition: transform 0.2s; }
         .music-playing { color: #00b894; animation: spin 4s linear infinite; } 
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -79,7 +79,7 @@
     <div class="background-blob blob-3"></div>
 
     <audio id="bgm" loop>
-        <source src="https://archive.org/download/GymnopedieNo.1/Gymnopedie%20No.%201.mp3" type="audio/mpeg">
+        <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/2/23/Erik_Satie_-_Gymnopedie_No_1.ogg/Erik_Satie_-_Gymnopedie_No_1.ogg.mp3" type="audio/mpeg">
     </audio>
 
     <header class="glass-header">
@@ -153,14 +153,11 @@
             </div>
             <div id="view-author" style="font-size:0.9rem; color:#666; margin-bottom:5px;">작성자: -</div>
             <p id="view-text" class="detail-text"></p>
-            
             <div class="divider"></div>
             <div id="comments-list" class="comments-area"></div>
-            
             <div class="campaign-text">
                 <i class="fas fa-smile" style="color:#ffb8b8;"></i> 따뜻한 댓글이 우리 모두를 행복하게 합니다
             </div>
-
             <div class="comment-input-area">
                 <input type="text" id="comment-writer" placeholder="이름" style="width: 70px;">
                 <input type="password" id="comment-pw" placeholder="비번" style="width: 60px;">
@@ -202,35 +199,58 @@
             }).catch(err => console.log("알림 실패:", err));
         }
 
-        // 🎵 배경음악 제어 (자동재생 시도)
+        // 🎵 배경음악 제어 (v3.8 강력한 자동재생)
         const bgm = document.getElementById('bgm');
         const btnMusic = document.getElementById('btn-music');
         let isMusicPlaying = false;
         
-        bgm.volume = 0.5; // 볼륨 50%
+        bgm.volume = 0.5;
 
-        // 음악 버튼 클릭 시 토글
-        btnMusic.addEventListener('click', () => {
-            if (bgm.paused) {
-                bgm.play();
-                btnMusic.classList.add('music-playing');
-                isMusicPlaying = true;
-            } else {
-                bgm.pause();
-                btnMusic.classList.remove('music-playing');
-                isMusicPlaying = false;
-            }
-        });
-
-        // 🚀 자동 재생 (첫 클릭 시 무조건 재생)
-        document.body.addEventListener('click', () => {
+        // 음악 시작 함수
+        function startMusic() {
             if(!isMusicPlaying) {
                 bgm.play().then(() => {
                     isMusicPlaying = true;
                     btnMusic.classList.add('music-playing');
-                }).catch(e => console.log("아직 재생 안됨"));
+                    showToast("🎵 잔잔한 음악이 흐릅니다");
+                    
+                    // 한번 켜지면 이벤트 제거 (중복 실행 방지)
+                    document.removeEventListener('click', startMusic);
+                    document.removeEventListener('touchstart', startMusic);
+                    document.removeEventListener('scroll', startMusic);
+                    document.removeEventListener('keydown', startMusic);
+                }).catch(e => {
+                    console.log("아직 재생 불가 (사용자 상호작용 필요)");
+                });
             }
-        }, { once: true }); // 딱 한번만 실행
+        }
+
+        // 🚀 모든 행동에 지뢰를 깔아둡니다 (어떤 행동이든 하면 음악 시작)
+        document.addEventListener('click', startMusic);
+        document.addEventListener('touchstart', startMusic); // 아이폰 터치 대응
+        document.addEventListener('scroll', startMusic);
+        document.addEventListener('keydown', startMusic);
+
+        // 첫 접속 시 안내
+        setTimeout(() => {
+            if(!isMusicPlaying) showToast("🎵 화면을 터치하면 음악이 나옵니다");
+        }, 1500);
+
+        // 버튼 클릭 수동 제어
+        btnMusic.addEventListener('click', (e) => {
+            e.stopPropagation(); // 위의 자동재생과 겹치지 않게
+            if (bgm.paused) {
+                bgm.play();
+                btnMusic.classList.add('music-playing');
+                isMusicPlaying = true;
+                showToast("음악 ON 🎵");
+            } else {
+                bgm.pause();
+                btnMusic.classList.remove('music-playing');
+                isMusicPlaying = false;
+                showToast("음악 OFF 🔇");
+            }
+        });
 
         // 💾 [내 글 저장 기능]
         function saveMyPost(docId) {
@@ -296,7 +316,6 @@
         document.getElementById('close-write').addEventListener('click', () => writeModal.classList.add('hidden'));
         document.getElementById('close-view').addEventListener('click', () => viewModal.classList.add('hidden'));
 
-        // [저장 버튼]
         document.getElementById('submit-post').addEventListener('click', () => {
             const name = document.getElementById('writer-name').value.trim();
             const pw = document.getElementById('writer-pw').value.trim();
@@ -323,7 +342,6 @@
             });
         });
 
-        // 목록 불러오기
         db.collection('posts')
           .where('date', '>=', todayMidnight) 
           .orderBy('date', 'desc')
