@@ -19,14 +19,14 @@
         /* 🚪 오프닝 대문 (인트로 화면) */
         #intro-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.95); /* 배경을 좀 더 불투명하게 */
+            backdrop-filter: blur(5px);
             z-index: 9999;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: opacity 0.5s;
+            transition: opacity 0.5s ease-out; /* 부드럽게 사라지기 */
         }
         .intro-content { text-align: center; animation: float 3s ease-in-out infinite; }
         .intro-logo { font-size: 3rem; color: #ff6b6b; margin-bottom: 20px; }
@@ -35,14 +35,14 @@
             padding: 15px 40px; font-size: 1.2rem; border-radius: 30px;
             cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             font-family: 'Gaegu', cursive;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background 0.2s;
         }
-        .intro-btn:active { transform: scale(0.95); }
-        .intro-text { margin-top: 15px; color: #666; font-size: 0.9rem; }
+        .intro-btn:active { transform: scale(0.95); background: #555; }
+        .intro-text { margin-top: 20px; color: #666; font-size: 0.9rem; }
 
         @keyframes float { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-10px);} }
 
-        /* 기존 스타일 유지 */
+        /* 기존 스타일 */
         .glass-header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; color: #333; z-index: 100; }
         .logo { font-size: 1.2rem; font-weight: bold; position: relative; }
         .header-right { display: flex; align-items: center; gap: 15px; } 
@@ -233,29 +233,30 @@
             }).catch(err => console.log("알림 실패:", err));
         }
 
-        // 🎵 [핵심] 오프닝 & 음악 제어
+        // 🎵 오프닝 및 음악 제어 (수정됨: 입장 우선 처리)
         const bgm = document.getElementById('bgm');
         const btnMusic = document.getElementById('btn-music');
         const overlay = document.getElementById('intro-overlay');
         const startBtn = document.getElementById('start-btn');
         
-        bgm.volume = 0.4; // 볼륨 40% (은은하게)
+        bgm.volume = 0.4;
 
-        // 입장하기 버튼 클릭 시 무조건 재생
+        // "입장하기" 버튼 클릭 로직 수정
         startBtn.addEventListener('click', () => {
+            // 1. [우선순위 1등] 대문을 즉시 닫아버립니다. (기다리지 않음)
+            overlay.style.opacity = '0';
+            setTimeout(() => { overlay.style.display = 'none'; }, 500);
+
+            // 2. [후순위] 음악은 알아서 재생되게 둡니다.
             bgm.play().then(() => {
-                // 성공하면 대문 사라짐
-                overlay.style.opacity = '0';
-                setTimeout(() => { overlay.style.display = 'none'; }, 500);
-                btnMusic.classList.add('music-playing'); // 아이콘 빙글빙글
+                btnMusic.classList.add('music-playing');
             }).catch(e => {
-                // 혹시라도 실패하면? (거의 없음)
-                alert("음악 재생을 위해 볼륨을 확인해주세요!");
-                overlay.style.display = 'none';
+                console.log("음악 자동재생 실패(브라우저 차단 등):", e);
+                // 실패해도 문은 이미 열렸으니 상관없습니다.
             });
         });
 
-        // 상단 음악 버튼 (수동 켜기/끄기)
+        // 음악 버튼 수동 제어
         btnMusic.addEventListener('click', () => {
             if (bgm.paused) {
                 bgm.play();
@@ -491,4 +492,4 @@
         }
     </script>
 </body>
-</html>
+</html>ㄴ
