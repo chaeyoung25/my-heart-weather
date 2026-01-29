@@ -26,7 +26,9 @@
         .post-it { padding: 15px; border-radius: 0 0 15px 0; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); cursor: pointer; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; border-top: 1px solid rgba(255,255,255,0.4); position: relative; }
         .post-it:hover { transform: translateY(-5px); }
         .notice-tag { position: absolute; top: -10px; left: 10px; background: #6c5ce7; color: white; font-size: 0.75rem; padding: 3px 10px; border-radius: 15px; font-family: 'Gaegu', cursive; z-index: 5; }
-        
+        .my-post-tag { position: absolute; top: -5px; right: -5px; background: #333; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; z-index: 10; opacity: 0.8; }
+        .comment-badge { background: #ff4757; color: white; font-size: 0.8rem; padding: 3px 8px; border-radius: 20px; margin-top: 5px; text-align: center; font-weight: bold; animation: pulse 2s infinite; display: none; }
+
         .color-0 { background: #fff4bd; color: #5a4a10; } .color-1 { background: #d4f0f0; color: #1e4a4a; } 
         .color-2 { background: #ffd6e7; color: #5a1e3a; } .color-3 { background: #e2dbf5; color: #3a1e5a; } 
         .color-4 { background: #d4ffd6; color: #1e5a2b; } 
@@ -41,8 +43,8 @@
         
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: -10px; background: white; z-index: 10; padding-bottom: 10px; border-bottom: 1px solid #eee; }
         
-        /* 📜 가독성을 위해 word-break: keep-all 추가 */
-        .notice-body { line-height: 1.8; color: #444; font-size: 0.95rem; word-break: keep-all; }
+        /* 📜 모든 기기에서 단어가 잘리지 않도록 정렬 속성 강화 */
+        .notice-body { line-height: 1.8; color: #444; font-size: 0.95rem; word-break: keep-all; white-space: normal; }
         .notice-section { margin: 15px 0; padding: 15px; background: #f0f2f5; border-radius: 12px; border-left: 5px solid #6c5ce7; }
         .notice-section h3 { font-size: 1.05rem; margin-bottom: 10px; color: #333; display: flex; align-items: center; gap: 8px; }
         .notice-item { margin-bottom: 10px; display: flex; gap: 8px; align-items: flex-start; word-break: keep-all; }
@@ -141,7 +143,7 @@
         let currentDocId = null;
         let currentDocData = null;
 
-        // 💌 줄 바꿈 및 단어 끊김 방지 로직 적용
+        // 💌 기기 무관 정밀 줄바꿈이 적용된 안내문 HTML
         const NOTICE_HTML = `
             <p style="margin-bottom:10px;">당신의 마음이 잠시 쉬어갈 수 있는 곳, <b style="color:#6c5ce7;">'마음날씨 체크인'</b>에 오신 걸 환영해요. 이곳은 세상의 소음에서 잠시 벗어나 나의 내면을 가만히 마주하고, 서로의 온기를 나누는 소중한 공간이에요.</p>
             <div class="notice-section">
@@ -156,8 +158,8 @@
                 <div class="notice-item"><i class="fas fa-circle" style="color: #f1c40f; font-size: 0.6rem; margin-top: 8px;"></i> <span><b>선물 같은 한마디:</b> 당신이 남긴 다정한 말들이 누군가에게는 오늘을 지키는 방패가 됩니다.</span></div>
                 <div class="notice-item"><i class="fas fa-circle" style="color: #f1c40f; font-size: 0.6rem; margin-top: 8px;"></i> <span><b>응원의 확인:</b> 내 글에 달린 진심 어린 격려를 마주하며 다시금 힘을 얻어보세요.</span></div>
             </div>
-            <p style="text-align:center; margin-top:20px; color:#333;">바쁘게 돌아가는 세상 속에서도, 누군가는 반드시 당신을 <br>마음 다해 응원하고 있다는 걸 기억해 주세요. ✨</p>
-            <p style="text-align:center; margin-top:5px; font-weight:bold;">나는 오늘도, <br>이름 모를 당신의 하루를 진심으로 응원할게요.</p>
+            <p style="text-align:center; margin-top:20px; color:#333;">바쁘게 돌아가는 세상 속에서도, 누군가는 반드시 당신을 <br><b>마음</b> 다해 응원하고 있다는 걸 기억해 주세요. ✨</p>
+            <p style="text-align:center; margin-top:10px; font-weight:bold;">나는 오늘도, <br>이름 모름 당신의 하루를 진심으로 응원할게요.</p>
         `;
 
         window.closeAllModals = function() {
