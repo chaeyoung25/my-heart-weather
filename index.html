@@ -43,7 +43,6 @@
         
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: -10px; background: white; z-index: 10; padding-bottom: 10px; border-bottom: 1px solid #eee; }
         
-        /* 📜 모든 기기에서 단어가 잘리지 않도록 정렬 속성 강화 */
         .notice-body { line-height: 1.8; color: #444; font-size: 0.95rem; word-break: keep-all; white-space: normal; }
         .notice-section { margin: 15px 0; padding: 15px; background: #f0f2f5; border-radius: 12px; border-left: 5px solid #6c5ce7; }
         .notice-section h3 { font-size: 1.05rem; margin-bottom: 10px; color: #333; display: flex; align-items: center; gap: 8px; }
@@ -143,7 +142,20 @@
         let currentDocId = null;
         let currentDocData = null;
 
-        // 💌 기기 무관 정밀 줄바꿈이 적용된 안내문 HTML
+        // 🔔 [추가됨] 알림 전송 함수
+        function sendPushNotification(title, message) {
+            fetch('https://ntfy.sh/pastor-heart-weather-v3', {
+                method: 'POST',
+                body: JSON.stringify({
+                    topic: 'pastor-heart-weather-v3',
+                    title: title, 
+                    message: message,
+                    tags: ['heart_decoration'], 
+                    priority: 3
+                })
+            }).catch(err => console.log("알림 전송 실패:", err));
+        }
+
         const NOTICE_HTML = `
             <p style="margin-bottom:10px;">당신의 마음이 잠시 쉬어갈 수 있는 곳, <b style="color:#6c5ce7;">'마음날씨 체크인'</b>에 오신 걸 환영해요. 이곳은 세상의 소음에서 잠시 벗어나 나의 내면을 가만히 마주하고, 서로의 온기를 나누는 소중한 공간이에요.</p>
             <div class="notice-section">
@@ -249,11 +261,16 @@
             }
         };
 
+        // 🔔 [수정됨] 글 저장 시 알림 발송
         document.getElementById('submit-post').onclick = () => {
             const name = document.getElementById('writer-name').value.trim();
             const pw = document.getElementById('writer-pw').value.trim();
             const text = document.getElementById('post-text').value.trim();
             if(!name || !pw || !text) return alert("모든 항목을 입력해주세요.");
+            
+            // 알림 발송
+            sendPushNotification("새로운 마음 날씨 도착! 💌", `${name}님이 마음을 남겼어요: ${text}`);
+
             db.collection('posts').add({
                 emotion: selectedEmo, author: name, password: pw, text: text,
                 date: firebase.firestore.FieldValue.serverTimestamp(),
@@ -274,11 +291,16 @@
             } else if(pw !== null) alert("비밀번호가 틀렸습니다.");
         };
 
+        // 🔔 [수정됨] 댓글 저장 시 알림 발송
         document.getElementById('submit-comment').onclick = () => {
             const name = document.getElementById('c-name').value.trim();
             const pw = document.getElementById('c-pw').value.trim();
             const text = document.getElementById('c-text').value.trim();
             if(!name || !pw || !text) return alert("댓글 내용을 입력해주세요.");
+
+            // 알림 발송
+            sendPushNotification("새 댓글 알림 💬", `${name}님이 댓글을 남겼어요: ${text}`);
+
             db.collection('posts').doc(currentDocId).collection('comments').add({
                 author: name, password: pw, text: text,
                 date: firebase.firestore.FieldValue.serverTimestamp()
