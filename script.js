@@ -10,9 +10,31 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// 관리자 모드 변수
+// ==================================================
+// 🔔 알림 설정 (보안 강화됨)
+// ==================================================
+// 핸드폰 ntfy 앱에 입력한 것과 똑같아야 합니다.
+const NOTI_TOPIC = "pastor-heart-weather-v3"; 
+
+function sendPushNotification(title, message) {
+    if (!NOTI_TOPIC || NOTI_TOPIC === "") return;
+
+    // 개인정보 보호를 위해 내용은 보내지 않고 신호만 보냅니다.
+    fetch(`https://ntfy.sh/${NOTI_TOPIC}`, {
+        method: 'POST',
+        body: message,
+        headers: {
+            'Title': title,
+            'Tags': 'heart_decoration', 
+            'Priority': 'default'
+        }
+    }).catch(err => console.log("알림 전송 실패(무시해도 됨):", err));
+}
+
+// ==================================================
+// 기본 변수 설정
+// ==================================================
 let isAdminMode = false;
-// 👇 [변경됨] 관리자 비밀번호
 const ADMIN_CODE = "0929"; 
 
 // 요소들
@@ -82,7 +104,7 @@ document.querySelectorAll('.emo-btn').forEach(btn => {
 document.getElementById('close-write').addEventListener('click', () => writeModal.classList.add('hidden'));
 document.getElementById('close-view').addEventListener('click', () => viewModal.classList.add('hidden'));
 
-// 저장
+// 저장 (알림 기능 추가됨)
 document.getElementById('submit-post').addEventListener('click', () => {
     const name = document.getElementById('writer-name').value.trim();
     const pw = document.getElementById('writer-pw').value.trim();
@@ -100,6 +122,9 @@ document.getElementById('submit-post').addEventListener('click', () => {
     }).then(() => {
         writeModal.classList.add('hidden');
         showToast("기록되었습니다!");
+
+        // 🔔 알림 발송 (내용은 숨기고 신호만 보냄)
+        sendPushNotification("새로운 마음 날씨 도착! 💌", "학생들이 마음을 남겼어요. 접속해서 확인해보세요!");
     });
 });
 
@@ -173,7 +198,7 @@ document.getElementById('delete-btn').addEventListener('click', () => {
 });
 
 // ==================================================
-// 💬 댓글 기능
+// 💬 댓글 기능 (알림 기능 추가됨)
 // ==================================================
 document.getElementById('submit-comment').addEventListener('click', () => {
     const name = document.getElementById('comment-writer').value.trim();
@@ -187,8 +212,12 @@ document.getElementById('submit-comment').addEventListener('click', () => {
         password: pw,
         text: text,
         date: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        document.getElementById('comment-input').value = '';
+        
+        // 🔔 알림 발송
+        sendPushNotification("새 댓글 알림 💬", "누군가 댓글을 남겼어요.");
     });
-    document.getElementById('comment-input').value = '';
 });
 
 function loadComments(postId) {
