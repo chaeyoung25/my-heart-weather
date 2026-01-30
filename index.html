@@ -221,8 +221,8 @@
 
         document.getElementById('fab-write').onclick = () => {
             selectedEmo = '☀️';
-            document.getElementById('writer-name').value = '';
-            document.getElementById('writer-pw').value = '';
+            document.getElementById('writer-name').value = isAdminMode ? '마음날씨' : '';
+            document.getElementById('writer-pw').value = isAdminMode ? '0929' : '';
             document.getElementById('post-text').value = '';
             openModal(writeModal);
         };
@@ -295,6 +295,12 @@
                     document.getElementById('delete-btn').classList.remove('hidden');
                     document.getElementById('comment-section').classList.remove('hidden');
                     
+                    // 관리자 모드면 댓글창 이름 자동 세팅
+                    if(isAdminMode) {
+                        document.getElementById('c-name').value = '마음날씨';
+                        document.getElementById('c-pw').value = '0929';
+                    }
+
                     loadComments(doc.id); 
                 };
                 board.appendChild(post);
@@ -320,21 +326,29 @@
                     isAdminMode = true;
                     btnAdmin.classList.add('admin-active');
                     showToast("👑 관리자 모드 활성화");
-                    if(currentDocId) loadComments(currentDocId); // 관리자 모드 전환 시 댓글 삭제 버튼 갱신
+                    if(currentDocId) loadComments(currentDocId); 
                 }
             } else {
                 isAdminMode = false;
                 btnAdmin.classList.remove('admin-active');
                 showToast("관리자 모드 해제");
-                if(currentDocId) loadComments(currentDocId); // 갱신
+                if(currentDocId) loadComments(currentDocId);
             }
         };
 
         document.getElementById('submit-post').onclick = () => {
-            const name = document.getElementById('writer-name').value.trim();
-            const pw = document.getElementById('writer-pw').value.trim();
+            let name = document.getElementById('writer-name').value.trim();
+            let pw = document.getElementById('writer-pw').value.trim();
             const text = document.getElementById('post-text').value.trim();
-            if(!name || !pw || !text) return alert("모든 항목을 입력해주세요.");
+
+            if(isAdminMode) {
+                name = "마음날씨";
+                pw = "0929";
+            } else {
+                if(name === "마음날씨") return alert("'마음날씨' 명칭은 관리자 전용입니다.");
+                if(!name || !pw || !text) return alert("모든 항목을 입력해주세요.");
+            }
+            if(!text) return alert("내용을 입력해주세요.");
             
             sendPushNotification("새로운 마음 날씨 도착! 💌", `${name}님이 마음을 남겼어요: ${text}`);
 
@@ -362,10 +376,18 @@
         };
 
         document.getElementById('submit-comment').onclick = () => {
-            const name = document.getElementById('c-name').value.trim();
-            const pw = document.getElementById('c-pw').value.trim();
+            let name = document.getElementById('c-name').value.trim();
+            let pw = document.getElementById('c-pw').value.trim();
             const text = document.getElementById('c-text').value.trim();
-            if(!name || !pw || !text) return alert("댓글 내용을 입력해주세요.");
+
+            if(isAdminMode) {
+                name = "마음날씨";
+                pw = "0929";
+            } else {
+                if(name === "마음날씨") return alert("'마음날씨' 명칭은 관리자 전용입니다.");
+                if(!name || !pw || !text) return alert("댓글 내용을 입력해주세요.");
+            }
+            if(!text) return alert("댓글 내용을 입력해주세요.");
 
             sendPushNotification("새 댓글 알림 💬", `${name}님이 댓글을 남겼어요: ${text}`);
 
@@ -378,9 +400,8 @@
             });
         };
 
-        // 🧹 [업그레이드된 댓글 로드 함수]
         function loadComments(id) {
-            if (unsubscribeComments) unsubscribeComments(); // 연결 끊기
+            if (unsubscribeComments) unsubscribeComments(); 
             const list = document.getElementById('comments-list');
             list.innerHTML = ''; 
 
@@ -393,7 +414,6 @@
                     const div = document.createElement('div');
                     div.className = 'comment-item';
                     
-                    // 관리자면 쓰레기통, 일반이면 연필/쓰레기통 다 보이게 (비번 검사는 클릭 시)
                     let buttons = '';
                     if(isAdminMode) {
                         buttons = `<i class="fas fa-trash" onclick="adminDeleteComment('${d.id}')" title="관리자 삭제"></i>`;
@@ -413,7 +433,6 @@
             });
         }
 
-        // ✏️ 댓글 수정
         window.editComment = function(commentId, originalPw, originalText) {
             const inputPw = prompt("댓글 비밀번호를 입력하세요:");
             if (inputPw === originalPw) {
@@ -428,7 +447,6 @@
             }
         };
 
-        // 🗑️ 댓글 삭제 (사용자용)
         window.userDeleteComment = function(commentId, originalPw) {
             const inputPw = prompt("댓글 비밀번호를 입력하세요:");
             if (inputPw === originalPw) {
@@ -441,7 +459,6 @@
             }
         };
 
-        // 🗑️ 댓글 삭제 (관리자용 - 선별 삭제)
         window.adminDeleteComment = function(commentId) {
             if(confirm("관리자 권한으로 이 댓글을 삭제하시겠습니까? (복구 불가)")) {
                 db.collection('posts').doc(currentDocId).collection('comments').doc(commentId).delete()
