@@ -20,8 +20,6 @@
         .glass-header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 100; }
         .logo { font-size: 1.2rem; font-weight: bold; color: #333; position: relative; }
         .admin-active { color: #ff6b6b !important; text-shadow: 0 0 5px rgba(255, 107, 107, 0.5); }
-        
-        /* 알림 배지 */
         .noti-dot { position: absolute; top: -2px; right: -8px; width: 10px; height: 10px; background: #ff4757; border-radius: 50%; border: 2px solid white; display: none; }
         .noti-active { display: block; animation: bounce 1s infinite; }
 
@@ -29,7 +27,7 @@
         #board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 80px 20px 20px; max-width: 800px; margin: 0 auto; }
         .loading-msg { text-align: center; color: #888; margin-top: 50px; grid-column: 1 / -1; }
         
-        /* 포스트잇 스타일 */
+        /* 포스트잇 */
         .post-it { padding: 15px; border-radius: 0 0 15px 0; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); cursor: pointer; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; border-top: 1px solid rgba(255,255,255,0.4); position: relative; }
         .post-it:hover { transform: translateY(-5px); }
         .notice-tag { position: absolute; top: -10px; left: 10px; background: #6c5ce7; color: white; font-size: 0.75rem; padding: 3px 10px; border-radius: 15px; font-family: 'Gaegu', cursive; z-index: 5; }
@@ -44,7 +42,7 @@
         .post-text { font-size: 0.9rem; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-family: 'Gaegu', cursive; margin-bottom: 10px;}
         .post-author { font-size: 0.8rem; font-weight: bold; text-align: right; opacity: 0.7; }
 
-        /* 모달 (팝업) */
+        /* 모달 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: flex-start; z-index: 200; overflow-y: auto; padding: 30px 10px; }
         .modal.show { display: flex; }
         .glass-card { background: #fff; padding: 25px; border-radius: 20px; width: 100%; max-width: 420px; position: relative; margin: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -68,6 +66,15 @@
 
         .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; z-index: 300; display: none; }
         .campaign-text { text-align: center; font-size: 0.85rem; color: #888; font-family: 'Gaegu', cursive; margin-bottom: 8px; margin-top: 5px; }
+
+        /* 댓글 아이템 스타일 */
+        .comment-item { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 0.9rem; }
+        .comment-content { flex: 1; }
+        .comment-actions { display: flex; gap: 8px; margin-left: 10px; opacity: 0.6; }
+        .comment-actions i { cursor: pointer; font-size: 0.8rem; }
+        .comment-actions i:hover { opacity: 1; transform: scale(1.1); }
+        .fa-trash { color: #ff6b6b; }
+        .fa-pen { color: #00b894; }
 
         @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-3px);} }
         @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
@@ -158,8 +165,6 @@
         const writeModal = document.getElementById('write-modal');
         const viewModal = document.getElementById('view-modal');
         const btnAdmin = document.getElementById('btn-admin-mode');
-        
-        // 오늘 날짜 계산 (안내문 ID 생성용)
         const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
         const noticeId = "notice-" + todayMidnight.toISOString().split('T')[0];
 
@@ -167,9 +172,8 @@
         let selectedEmo = '☀️';
         let currentDocId = null;
         let currentDocData = null;
-        let unsubscribeComments = null; // 🔔 댓글 연결 제어 변수
+        let unsubscribeComments = null;
 
-        // 🔔 알림 전송 함수 (JSON 방식 + 메인 주소)
         function sendPushNotification(title, message) {
             fetch('https://ntfy.sh/', {
                 method: 'POST',
@@ -201,20 +205,15 @@
             <p style="text-align:center; margin-top:10px; font-weight:bold;">나는 오늘도, <br>이름 모름 당신의 하루를 진심으로 응원할게요.</p>
         `;
 
-        // 🧹 [핵심 수정] 창 닫을 때 무조건 기존 연결 끊기
         window.closeAllModals = function() {
             writeModal.classList.remove('show');
             viewModal.classList.remove('show');
             document.body.style.overflow = 'auto';
-            if (unsubscribeComments) { 
-                unsubscribeComments(); 
-                unsubscribeComments = null; 
-            }
+            if (unsubscribeComments) { unsubscribeComments(); unsubscribeComments = null; }
         };
 
-        // 📂 모달 열기 (강제 청소 후 열기)
         function openModal(modal) {
-            closeAllModals(); // 기존 창 닫으면서 연결도 확실히 끊음
+            closeAllModals();
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
             modal.scrollTop = 0;
@@ -242,7 +241,6 @@
             emoGrid.appendChild(btn);
         });
 
-        // 💾 [내 글 저장 기능]
         function saveMyPost(docId) {
             let myPosts = JSON.parse(localStorage.getItem('my_posts') || '[]');
             myPosts.push(docId);
@@ -253,19 +251,15 @@
             return myPosts.includes(docId);
         }
 
-        // 📝 메인 게시판 로딩
         db.collection('posts').where('date', '>=', todayMidnight).orderBy('date', 'desc').onSnapshot(snap => {
             board.innerHTML = '';
             
-            // 📌 [안내 포스트잇] (댓글 가능, 매일 초기화)
+            // 안내 포스트잇
             const notice = document.createElement('div');
             notice.className = "post-it color-3";
             notice.innerHTML = `<div class="notice-tag">✨ 마음의 쉼표</div><div class="post-emoji">🌱</div><div class="post-text">마음날씨 체크인에 오신 걸 환영해요! 클릭해서 안내문을 읽어보세요.</div><div class="post-author">From. 마음날씨</div>`;
             notice.onclick = () => {
-                // 1. 순서 중요: 먼저 창을 열면서 기존 연결을 끊습니다.
                 openModal(viewModal);
-
-                // 2. 내용 채우기
                 currentDocId = noticeId;
                 currentDocData = { isNotice: true, emotion: '🌱', author: '마음날씨' };
                 document.getElementById('view-emotion').textContent = '🌱';
@@ -273,16 +267,13 @@
                 document.getElementById('view-content').innerHTML = NOTICE_HTML;
                 document.getElementById('view-content').style.fontFamily = "'Noto Sans KR', sans-serif";
                 
-                // 3. 안내문은 삭제 버튼 숨기고 댓글창은 보여줌
                 document.getElementById('delete-btn').classList.add('hidden');
                 document.getElementById('comment-section').classList.remove('hidden');
                 
-                // 4. 이제 댓글을 불러옵니다. (깨끗한 상태에서)
                 loadComments(noticeId);
             };
             board.appendChild(notice);
 
-            // 일반 게시글
             snap.forEach(doc => {
                 const data = doc.data();
                 const post = document.createElement('div');
@@ -294,21 +285,16 @@
                 post.innerHTML = `${myTag}<div class="post-emoji">${data.emotion}</div><div class="post-text">${data.text}</div><div class="post-author">From. ${data.author}</div><div id="badge-${doc.id}" class="comment-badge">🔔 댓글 도착!</div>`;
                 
                 post.onclick = () => {
-                    // 1. 순서 중요: 먼저 창을 엽니다 (청소)
                     openModal(viewModal);
-
-                    // 2. 내용 채우기
                     currentDocId = doc.id; currentDocData = data;
                     document.getElementById('view-emotion').textContent = data.emotion;
                     document.getElementById('view-author').textContent = `작성자: ${data.author}`;
                     document.getElementById('view-content').textContent = data.text;
                     document.getElementById('view-content').style.fontFamily = "'Gaegu', cursive";
                     
-                    // 3. 버튼 보이기
                     document.getElementById('delete-btn').classList.remove('hidden');
                     document.getElementById('comment-section').classList.remove('hidden');
                     
-                    // 4. 댓글 로드
                     loadComments(doc.id); 
                 };
                 board.appendChild(post);
@@ -317,7 +303,6 @@
             });
         });
 
-        // 🔔 내 글 댓글 확인 (배지용)
         function checkComments(postId) {
             db.collection('posts').doc(postId).collection('comments').onSnapshot(snap => {
                 if(!snap.empty) {
@@ -335,15 +320,16 @@
                     isAdminMode = true;
                     btnAdmin.classList.add('admin-active');
                     showToast("👑 관리자 모드 활성화");
+                    if(currentDocId) loadComments(currentDocId); // 관리자 모드 전환 시 댓글 삭제 버튼 갱신
                 }
             } else {
                 isAdminMode = false;
                 btnAdmin.classList.remove('admin-active');
                 showToast("관리자 모드 해제");
+                if(currentDocId) loadComments(currentDocId); // 갱신
             }
         };
 
-        // 📝 글 저장
         document.getElementById('submit-post').onclick = () => {
             const name = document.getElementById('writer-name').value.trim();
             const pw = document.getElementById('writer-pw').value.trim();
@@ -362,7 +348,6 @@
             });
         };
 
-        // 🗑️ 글 삭제
         document.getElementById('delete-btn').onclick = () => {
             if(!currentDocId || currentDocData.isNotice) return;
             if(!confirm("이 마음 기록을 삭제할까요?")) return;
@@ -376,7 +361,6 @@
             } else if(pw !== null) alert("비밀번호가 틀렸습니다.");
         };
 
-        // 💬 댓글 저장
         document.getElementById('submit-comment').onclick = () => {
             const name = document.getElementById('c-name').value.trim();
             const pw = document.getElementById('c-pw').value.trim();
@@ -394,25 +378,76 @@
             });
         };
 
-        // 🧹 댓글 로드 (핵심 수정됨)
+        // 🧹 [업그레이드된 댓글 로드 함수]
         function loadComments(id) {
-            // 1. 안전장치: 혹시라도 연결이 남아있으면 끊기
-            if (unsubscribeComments) unsubscribeComments();
-            
-            // 2. 화면 비우기 (잔상 제거)
+            if (unsubscribeComments) unsubscribeComments(); // 연결 끊기
             const list = document.getElementById('comments-list');
             list.innerHTML = ''; 
 
-            // 3. 새 구독 시작
             unsubscribeComments = db.collection('posts').doc(id).collection('comments').orderBy('date').onSnapshot(snap => {
-                list.innerHTML = ''; // 데이터 들어올 때마다 새로 그리기
+                list.innerHTML = '';
                 if(snap.empty) { list.innerHTML = '<p style="text-align:center; color:#ccc; font-size:0.85rem;">첫 응원의 댓글을 남겨보세요.</p>'; return; }
+                
                 snap.forEach(d => {
                     const c = d.data();
-                    list.innerHTML += `<div style="font-size:0.9rem; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;"><b>${c.author}:</b> ${c.text}</div>`;
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    // 관리자면 쓰레기통, 일반이면 연필/쓰레기통 다 보이게 (비번 검사는 클릭 시)
+                    let buttons = '';
+                    if(isAdminMode) {
+                        buttons = `<i class="fas fa-trash" onclick="adminDeleteComment('${d.id}')" title="관리자 삭제"></i>`;
+                    } else {
+                        buttons = `
+                            <i class="fas fa-pen" onclick="editComment('${d.id}', '${c.password}', '${c.text}')" title="수정"></i>
+                            <i class="fas fa-trash" onclick="userDeleteComment('${d.id}', '${c.password}')" title="삭제"></i>
+                        `;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-content"><b>${c.author}:</b> <span id="text-${d.id}">${c.text}</span></div>
+                        <div class="comment-actions">${buttons}</div>
+                    `;
+                    list.appendChild(div);
                 });
             });
         }
+
+        // ✏️ 댓글 수정
+        window.editComment = function(commentId, originalPw, originalText) {
+            const inputPw = prompt("댓글 비밀번호를 입력하세요:");
+            if (inputPw === originalPw) {
+                const newText = prompt("수정할 내용을 입력하세요:", originalText);
+                if (newText && newText.trim() !== "") {
+                    db.collection('posts').doc(currentDocId).collection('comments').doc(commentId).update({
+                        text: newText
+                    }).then(() => showToast("댓글이 수정되었습니다."));
+                }
+            } else if (inputPw !== null) {
+                alert("비밀번호가 틀렸습니다.");
+            }
+        };
+
+        // 🗑️ 댓글 삭제 (사용자용)
+        window.userDeleteComment = function(commentId, originalPw) {
+            const inputPw = prompt("댓글 비밀번호를 입력하세요:");
+            if (inputPw === originalPw) {
+                if(confirm("정말 삭제하시겠습니까?")) {
+                    db.collection('posts').doc(currentDocId).collection('comments').doc(commentId).delete()
+                        .then(() => showToast("댓글이 삭제되었습니다."));
+                }
+            } else if (inputPw !== null) {
+                alert("비밀번호가 틀렸습니다.");
+            }
+        };
+
+        // 🗑️ 댓글 삭제 (관리자용 - 선별 삭제)
+        window.adminDeleteComment = function(commentId) {
+            if(confirm("관리자 권한으로 이 댓글을 삭제하시겠습니까? (복구 불가)")) {
+                db.collection('posts').doc(currentDocId).collection('comments').doc(commentId).delete()
+                    .then(() => showToast("관리자 권한으로 삭제됨"));
+            }
+        };
 
         function showToast(msg) {
             const t = document.getElementById('toast');
