@@ -54,12 +54,12 @@
         .modal.show { display: flex; }
         .glass-card { background: #fff; padding: 25px; border-radius: 20px; width: 100%; max-width: 420px; position: relative; margin: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         
-        /* 설치 유도 팝업 스타일 */
+        /* 설치 유도 팝업 */
         #install-popup { align-items: center; z-index: 300; }
         .install-card { text-align: center; padding: 30px; border: 2px solid rgba(255, 154, 158, 0.3); }
         .install-icon { font-size: 3.5rem; color: #ff9a9e; margin-bottom: 15px; }
         .install-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 10px; color: #333; }
-        .install-desc { font-size: 0.95rem; color: #666; margin-bottom: 25px; line-height: 1.5; font-family: 'Gaegu', cursive; }
+        #install-desc { font-size: 0.95rem; color: #666; margin-bottom: 25px; line-height: 1.5; font-family: 'Gaegu', cursive; }
         .install-btn-group { display: flex; gap: 10px; }
         .btn-later { background: #eee; color: #666; border: none; padding: 12px; border-radius: 12px; flex: 1; font-weight: bold; cursor: pointer; }
         .btn-install { background: #ff9a9e; color: white; border: none; padding: 12px; border-radius: 12px; flex: 2; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(255,154,158,0.4); }
@@ -102,7 +102,7 @@
         <div class="glass-card install-card">
             <div class="install-icon"><i class="fas fa-mobile-alt"></i></div>
             <div class="install-title">마음날씨를 앱으로 만나요</div>
-            <div class="install-desc">홈 화면에 추가하면 더 빠르고 편하게<br>서로의 마음 날씨를 확인할 수 있어요!</div>
+            <div id="install-desc">홈 화면에 추가하면 더 빠르고 편하게<br>서로의 마음 날씨를 확인할 수 있어요!</div>
             <div class="install-btn-group">
                 <button id="btn-install-later" class="btn-later">나중에요</button>
                 <button id="btn-install-now" class="btn-install">좋아요!</button>
@@ -197,22 +197,43 @@
         let currentDocId = null;
         let currentDocData = null;
         let unsubscribeComments = null;
-        let deferredPrompt; // 설치 이벤트를 저장할 변수
+        let deferredPrompt;
 
-        // 앱 설치 유도 로직
+        // --- 앱 설치 로직 통합 ---
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+        window.addEventListener('load', () => {
+            // 이미 설치된 상태가 아닐 때만 팝업 표시
+            if (!isStandalone) {
+                setTimeout(() => {
+                    document.getElementById('install-popup').classList.add('show');
+                }, 2000); // 접속 2초 후 팝업
+            }
+        });
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('install-popup').classList.add('show');
         });
 
         document.getElementById('btn-install-now').onclick = async () => {
             if (deferredPrompt) {
+                // 안드로이드, 윈도우 크롬 등 지원 기기
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') console.log('사용자가 설치를 승인했습니다.');
                 deferredPrompt = null;
                 document.getElementById('install-popup').classList.remove('show');
+            } else if (isIOS) {
+                // 아이폰/아이패드 사파리 안내
+                document.getElementById('install-desc').innerHTML = 
+                    "<span style='color:#ff6b6b; font-weight:bold;'>아이폰 설치 방법:</span><br>1. 하단 [공유] 버튼 클릭<br>2. [홈 화면에 추가] 클릭!";
+                document.getElementById('btn-install-now').style.display = 'none';
+            } else {
+                // 맥 사파리 또는 기타 환경 안내
+                document.getElementById('install-desc').innerHTML = 
+                    "브라우저 설정 메뉴에서<br><span style='font-weight:bold;'>'마음날씨 설치'</span> 또는<br><span style='font-weight:bold;'>'홈 화면에 추가'</span>를 눌러주세요!";
+                document.getElementById('btn-install-now').style.display = 'none';
             }
         };
 
@@ -220,6 +241,7 @@
             document.getElementById('install-popup').classList.remove('show');
         };
 
+        // --- 기존 사역 앱 로직 유지 ---
         function sendPushNotification(title, message) {
             fetch('https://ntfy.sh/', {
                 method: 'POST',
@@ -234,21 +256,12 @@
         }
 
         const NOTICE_HTML = `
-            <p style="margin-bottom:10px;">당신의 마음이 잠시 쉬어갈 수 있는 곳, <b style="color:#6c5ce7;">'마음날씨 체크인'</b>에 오신 걸 환영해요. 이곳은 세상의 소음에서 잠시 벗어나 나의 내면을 가만히 마주하고, 서로의 온기를 나누는 소중한 공간이에요.</p>
+            <p style="margin-bottom:10px;">당신의 마음이 잠시 쉬어갈 수 있는 곳, <b style="color:#6c5ce7;">'마음날씨 체크인'</b>에 오신 걸 환영해요.</p>
             <div class="notice-section">
                 <h3>🌱 우리가 여기서 만나는 이유</h3>
-                <div class="notice-item"><i class="fas fa-star" style="color: #f1c40f;"></i> <span><b>가장 나다운 모습으로:</b> 누구에게도 말하지 못했던 속마음을 편안하게 꺼내어보세요.</span></div>
-                <div class="notice-item"><i class="fas fa-star" style="color: #f1c40f;"></i> <span><b>함께 나누는 삶의 무게:</b> 혼자 짊어지기 무거운 고민들, 이제는 우리 조금씩 나누어 들어볼까요?</span></div>
-                <div class="notice-item"><i class="fas fa-star" style="color: #f1c40f;"></i> <span><b>소망의 발견:</b> 유난히 괴롭고 힘든 날, 따뜻한 글들을 보며 다시 시작할 용기를 얻어 가세요.</span></div>
+                <div class="notice-item"><i class="fas fa-star" style="color: #f1c40f;"></i> <span>가장 나다운 모습으로 속마음을 꺼내어보세요.</span></div>
             </div>
-            <div class="notice-section">
-                <h3>❤️ 함께 온기를 나누는 방법</h3>
-                <div class="notice-item"><i class="fas fa-circle" style="color: #f1c40f; font-size: 0.6rem; margin-top: 8px;"></i> <span><b>다정한 시선:</b> 다른 이들의 마음 날씨를 살피며 공감과 위로의 마음을 건네주세요.</span></div>
-                <div class="notice-item"><i class="fas fa-circle" style="color: #f1c40f; font-size: 0.6rem; margin-top: 8px;"></i> <span><b>선물 같은 한마디:</b> 당신이 남긴 다정한 말들이 누군가에게는 오늘을 지키는 방패가 됩니다.</span></div>
-                <div class="notice-item"><i class="fas fa-circle" style="color: #f1c40f; font-size: 0.6rem; margin-top: 8px;"></i> <span><b>응원의 확인:</b> 내 글에 달린 진심 어린 격려를 마주하며 다시금 힘을 얻어보세요.</span></div>
-            </div>
-            <p style="text-align:center; margin-top:20px; color:#333;">바쁘게 돌아가는 세상 속에서도, 누군가는 반드시 당신을 <br><b>마음</b> 다해 응원하고 있다는 걸 기억해 주세요. ✨</p>
-            <p style="text-align:center; margin-top:10px; font-weight:bold;">나는 오늘도, <br>이름 모름 당신의 하루를 진심으로 응원할게요.</p>
+            <p style="text-align:center; margin-top:20px; color:#333;">나는 오늘도, 이름 모름 당신의 하루를 진심으로 응원할게요.</p>
         `;
 
         window.closeAllModals = function() {
