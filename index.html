@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="마음날씨">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/826/826070.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1077/1077035.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -61,7 +61,6 @@
         .install-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 12px; color: #333; }
         #install-desc { font-size: 1rem; color: #444; margin-bottom: 25px; line-height: 1.6; font-family: 'Gaegu', cursive; text-align: center; }
         
-        /* 노출 제어 버튼 그룹 */
         .install-footer { display: flex; justify-content: center; gap: 15px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 15px; }
         .btn-toggle { background: none; border: none; color: #999; font-size: 0.85rem; cursor: pointer; text-decoration: underline; padding: 5px; }
         .btn-toggle:hover { color: #666; }
@@ -198,7 +197,6 @@
         let currentDocData = null;
         let unsubscribeComments = null;
 
-        // --- 정교화된 기기 감지 로직 ---
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
@@ -244,7 +242,6 @@
             }
         };
 
-        // --- 기존 기능 유지 ---
         function sendPushNotification(title, message) {
             fetch('https://ntfy.sh/', {
                 method: 'POST',
