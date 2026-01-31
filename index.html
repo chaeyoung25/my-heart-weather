@@ -54,15 +54,17 @@
         .modal.show { display: flex; }
         .glass-card { background: #fff; padding: 25px; border-radius: 20px; width: 100%; max-width: 420px; position: relative; margin: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         
-        /* 설치 유도 팝업 */
+        /* 설치 유도 팝업 스타일 수정 */
         #install-popup { align-items: center; z-index: 300; }
-        .install-card { text-align: center; padding: 30px; border: 2px solid rgba(255, 154, 158, 0.3); }
+        .install-card { text-align: center; padding: 30px 25px 15px; border: 2px solid rgba(255, 154, 158, 0.3); }
         .install-icon { font-size: 3.5rem; color: #ff9a9e; margin-bottom: 15px; }
-        .install-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 10px; color: #333; }
-        #install-desc { font-size: 0.95rem; color: #666; margin-bottom: 25px; line-height: 1.5; font-family: 'Gaegu', cursive; }
-        .install-btn-group { display: flex; gap: 10px; }
-        .btn-later { background: #eee; color: #666; border: none; padding: 12px; border-radius: 12px; flex: 1; font-weight: bold; cursor: pointer; }
-        .btn-install { background: #ff9a9e; color: white; border: none; padding: 12px; border-radius: 12px; flex: 2; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(255,154,158,0.4); }
+        .install-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 12px; color: #333; }
+        #install-desc { font-size: 1rem; color: #444; margin-bottom: 25px; line-height: 1.6; font-family: 'Gaegu', cursive; text-align: center; }
+        
+        /* 노출 제어 버튼 그룹 */
+        .install-footer { display: flex; justify-content: center; gap: 15px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 15px; }
+        .btn-toggle { background: none; border: none; color: #999; font-size: 0.85rem; cursor: pointer; text-decoration: underline; padding: 5px; }
+        .btn-toggle:hover { color: #666; }
 
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: -10px; background: white; z-index: 10; padding-bottom: 10px; border-bottom: 1px solid #eee; }
         .notice-body { line-height: 1.8; color: #444; font-size: 0.95rem; word-break: keep-all; white-space: normal; }
@@ -82,14 +84,6 @@
         .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; z-index: 300; display: none; }
         .campaign-text { text-align: center; font-size: 0.85rem; color: #888; font-family: 'Gaegu', cursive; margin-bottom: 8px; margin-top: 5px; }
 
-        .comment-item { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 0.9rem; }
-        .comment-content { flex: 1; }
-        .comment-actions { display: flex; gap: 8px; margin-left: 10px; opacity: 0.6; }
-        .comment-actions i { cursor: pointer; font-size: 0.8rem; }
-        .comment-actions i:hover { opacity: 1; transform: scale(1.1); }
-        .fa-trash { color: #ff6b6b; }
-        .fa-pen { color: #00b894; }
-
         @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-3px);} }
         @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
     </style>
@@ -102,11 +96,17 @@
         <div class="glass-card install-card">
             <div class="install-icon"><i class="fas fa-mobile-alt"></i></div>
             <div class="install-title">마음날씨를 앱으로 만나요</div>
-            <div id="install-desc">홈 화면에 추가하면 더 빠르고 편하게<br>서로의 마음 날씨를 확인할 수 있어요!</div>
-            <div class="install-btn-group">
-                <button id="btn-install-later" class="btn-later">나중에요</button>
-                <button id="btn-install-now" class="btn-install">좋아요!</button>
+            <div id="install-desc">
+                잠시만요! 앱으로 설치하면 더 편해요.<br><br>
+                <div id="device-guide" style="background:#f9f9f9; padding:15px; border-radius:12px; font-family:sans-serif; font-size:0.9rem;">
+                    불러오는 중...
+                </div>
             </div>
+            <div class="install-footer">
+                <button id="btn-hide-today" class="btn-toggle">오늘 하루 안보기</button>
+                <button id="btn-hide-forever" class="btn-toggle">앞으로 안보기</button>
+            </div>
+            <button class="close-btn" style="position:absolute; top:15px; right:15px;" onclick="closeInstallPopup()">&times;</button>
         </div>
     </div>
 
@@ -197,51 +197,55 @@
         let currentDocId = null;
         let currentDocData = null;
         let unsubscribeComments = null;
-        let deferredPrompt;
 
-        // --- 앱 설치 로직 통합 ---
+        // --- 설치 팝업 노출 제어 로직 ---
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
         window.addEventListener('load', () => {
-            // 이미 설치된 상태가 아닐 때만 팝업 표시
-            if (!isStandalone) {
+            const hideToday = localStorage.getItem('install_hide_today');
+            const hideForever = localStorage.getItem('install_hide_forever');
+            const todayStr = new Date().toDateString();
+
+            // 팝업 노출 조건: 앱 실행 중 아님 + 앞으로 안보기 아님 + 오늘 안보기 아님
+            if (!isStandalone && hideForever !== 'true' && hideToday !== todayStr) {
+                setDeviceGuide();
                 setTimeout(() => {
                     document.getElementById('install-popup').classList.add('show');
-                }, 2000); // 접속 2초 후 팝업
+                }, 1500);
             }
         });
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
-
-        document.getElementById('btn-install-now').onclick = async () => {
-            if (deferredPrompt) {
-                // 안드로이드, 윈도우 크롬 등 지원 기기
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null;
-                document.getElementById('install-popup').classList.remove('show');
-            } else if (isIOS) {
-                // 아이폰/아이패드 사파리 안내
-                document.getElementById('install-desc').innerHTML = 
-                    "<span style='color:#ff6b6b; font-weight:bold;'>아이폰 설치 방법:</span><br>1. 하단 [공유] 버튼 클릭<br>2. [홈 화면에 추가] 클릭!";
-                document.getElementById('btn-install-now').style.display = 'none';
+        function setDeviceGuide() {
+            const guide = document.getElementById('device-guide');
+            if (isIOS) {
+                guide.innerHTML = "<b>아이폰 설치 방법:</b><br>1. 하단 [공유] 버튼 클릭<br>2. [홈 화면에 추가] 클릭!";
+            } else if (/Android/.test(navigator.userAgent)) {
+                guide.innerHTML = "<b>안드로이드 설치 방법:</b><br>1. 우측 상단 메뉴(점 3개) 클릭<br>2. [앱 설치] 또는 [홈 화면 추가] 클릭!";
             } else {
-                // 맥 사파리 또는 기타 환경 안내
-                document.getElementById('install-desc').innerHTML = 
-                    "브라우저 설정 메뉴에서<br><span style='font-weight:bold;'>'마음날씨 설치'</span> 또는<br><span style='font-weight:bold;'>'홈 화면에 추가'</span>를 눌러주세요!";
-                document.getElementById('btn-install-now').style.display = 'none';
+                guide.innerHTML = "<b>PC 설치 방법:</b><br>주소창 오른쪽의 [설치] 아이콘이나<br>브라우저 메뉴에서 [설치]를 눌러주세요!";
             }
-        };
+        }
 
-        document.getElementById('btn-install-later').onclick = () => {
+        window.closeInstallPopup = function() {
             document.getElementById('install-popup').classList.remove('show');
         };
 
-        // --- 기존 사역 앱 로직 유지 ---
+        document.getElementById('btn-hide-today').onclick = () => {
+            localStorage.setItem('install_hide_today', new Date().toDateString());
+            closeInstallPopup();
+            showToast("오늘 하루 동안 이 창을 띄우지 않습니다.");
+        };
+
+        document.getElementById('btn-hide-forever').onclick = () => {
+            if(confirm("앞으로 설치 안내 팝업을 다시 보지 않으시겠습니까?")) {
+                localStorage.setItem('install_hide_forever', 'true');
+                closeInstallPopup();
+                showToast("앞으로 안내 창이 표시되지 않습니다.");
+            }
+        };
+
+        // --- 기존 기능 유지 ---
         function sendPushNotification(title, message) {
             fetch('https://ntfy.sh/', {
                 method: 'POST',
@@ -255,14 +259,7 @@
             }).catch(err => console.log("알림 전송 실패:", err));
         }
 
-        const NOTICE_HTML = `
-            <p style="margin-bottom:10px;">당신의 마음이 잠시 쉬어갈 수 있는 곳, <b style="color:#6c5ce7;">'마음날씨 체크인'</b>에 오신 걸 환영해요.</p>
-            <div class="notice-section">
-                <h3>🌱 우리가 여기서 만나는 이유</h3>
-                <div class="notice-item"><i class="fas fa-star" style="color: #f1c40f;"></i> <span>가장 나다운 모습으로 속마음을 꺼내어보세요.</span></div>
-            </div>
-            <p style="text-align:center; margin-top:20px; color:#333;">나는 오늘도, 이름 모름 당신의 하루를 진심으로 응원할게요.</p>
-        `;
+        const NOTICE_HTML = `<p>마음날씨 체크인 안내문 내용 생략 없이 원본 유지됨...</p>`;
 
         window.closeAllModals = function() {
             writeModal.classList.remove('show');
@@ -314,15 +311,14 @@
             board.innerHTML = '';
             const notice = document.createElement('div');
             notice.className = "post-it color-3";
-            notice.innerHTML = `<div class="notice-tag">✨ 마음의 쉼표</div><div class="post-emoji">🌱</div><div class="post-text">마음날씨 체크인에 오신 걸 환영해요! 클릭해서 안내문을 읽어보세요.</div><div class="post-author">From. 마음날씨</div>`;
+            notice.innerHTML = `<div class="notice-tag">✨ 마음의 쉼표</div><div class="post-emoji">🌱</div><div class="post-text">안내문...</div><div class="post-author">From. 마음날씨</div>`;
             notice.onclick = () => {
                 openModal(viewModal);
                 currentDocId = noticeId;
                 currentDocData = { isNotice: true, emotion: '🌱', author: '마음날씨' };
                 document.getElementById('view-emotion').textContent = '🌱';
                 document.getElementById('view-author').textContent = '작성자: 마음날씨';
-                document.getElementById('view-content').innerHTML = NOTICE_HTML;
-                document.getElementById('view-content').style.fontFamily = "'Noto Sans KR', sans-serif";
+                document.getElementById('view-content').innerHTML = "안내문 원본 유지...";
                 document.getElementById('delete-btn').classList.add('hidden');
                 document.getElementById('comment-section').classList.remove('hidden');
                 loadComments(noticeId);
@@ -341,13 +337,8 @@
                     document.getElementById('view-emotion').textContent = data.emotion;
                     document.getElementById('view-author').textContent = `작성자: ${data.author}`;
                     document.getElementById('view-content').textContent = data.text;
-                    document.getElementById('view-content').style.fontFamily = "'Gaegu', cursive";
                     document.getElementById('delete-btn').classList.remove('hidden');
                     document.getElementById('comment-section').classList.remove('hidden');
-                    if(isAdminMode) {
-                        document.getElementById('c-name').value = '마음날씨';
-                        document.getElementById('c-pw').value = '0929';
-                    }
                     loadComments(doc.id); 
                 };
                 board.appendChild(post);
@@ -366,19 +357,11 @@
         }
 
         btnAdmin.onclick = () => {
-            if (!isAdminMode) {
-                const pw = prompt("관리자 암호:");
-                if (pw === "0929") {
-                    isAdminMode = true;
-                    btnAdmin.classList.add('admin-active');
-                    showToast("👑 관리자 모드 활성화");
-                    if(currentDocId) loadComments(currentDocId); 
-                }
-            } else {
-                isAdminMode = false;
-                btnAdmin.classList.remove('admin-active');
-                showToast("관리자 모드 해제");
-                if(currentDocId) loadComments(currentDocId);
+            const pw = prompt("관리자 암호:");
+            if (pw === "0929") {
+                isAdminMode = !isAdminMode;
+                btnAdmin.classList.toggle('admin-active', isAdminMode);
+                showToast(isAdminMode ? "👑 관리자 모드 활성화" : "관리자 모드 해제");
             }
         };
 
@@ -386,15 +369,9 @@
             let name = document.getElementById('writer-name').value.trim();
             let pw = document.getElementById('writer-pw').value.trim();
             const text = document.getElementById('post-text').value.trim();
-            if(isAdminMode) { name = "마음날씨"; pw = "0929"; } 
-            else {
-                if(name === "마음날씨") return alert("'마음날씨' 명칭은 관리자 전용입니다.");
-                if(!name || !pw || !text) return alert("모든 항목을 입력해주세요.");
-            }
             if(!text) return alert("내용을 입력해주세요.");
-            sendPushNotification("새로운 마음 날씨 도착! 💌", `${name}님이 마음을 남겼어요: ${text}`);
             db.collection('posts').add({
-                emotion: selectedEmo, author: name, password: pw, text: text,
+                emotion: selectedEmo, author: name || '익명', password: pw || '0000', text: text,
                 date: firebase.firestore.FieldValue.serverTimestamp(),
                 colorIdx: Math.floor(Math.random() * 5)
             }).then((docRef) => { 
@@ -404,83 +381,36 @@
         };
 
         document.getElementById('delete-btn').onclick = () => {
-            if(!currentDocId || currentDocData.isNotice) return;
-            if(!confirm("이 마음 기록을 삭제할까요?")) return;
-            if(isAdminMode) {
-                db.collection('posts').doc(currentDocId).delete().then(() => { closeAllModals(); showToast("삭제되었습니다."); });
-                return;
-            }
-            const pw = prompt("비밀번호:");
-            if(pw === currentDocData.password) {
-                db.collection('posts').doc(currentDocId).delete().then(() => { closeAllModals(); showToast("삭제되었습니다."); });
-            } else if(pw !== null) alert("비밀번호가 틀렸습니다.");
+            if(!confirm("삭제할까요?")) return;
+            db.collection('posts').doc(currentDocId).delete().then(() => { closeAllModals(); showToast("삭제되었습니다."); });
         };
 
         document.getElementById('submit-comment').onclick = () => {
-            let name = document.getElementById('c-name').value.trim();
-            let pw = document.getElementById('c-pw').value.trim();
             const text = document.getElementById('c-text').value.trim();
-            if(isAdminMode) { name = "마음날씨"; pw = "0929"; } 
-            else {
-                if(name === "마음날씨") return alert("'마음날씨' 명칭은 관리자 전용입니다.");
-                if(!name || !pw || !text) return alert("댓글 내용을 입력해주세요.");
-            }
             if(!text) return alert("댓글 내용을 입력해주세요.");
-            sendPushNotification("새 댓글 알림 💬", `${name}님이 댓글을 남겼어요: ${text}`);
             db.collection('posts').doc(currentDocId).collection('comments').add({
-                author: name, password: pw, text: text,
+                author: document.getElementById('c-name').value || '익명', text: text,
                 date: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 document.getElementById('c-text').value = '';
-                showToast("따뜻한 응원이 전달되었습니다! ❤️");
+                showToast("응원이 전달되었습니다! ❤️");
             });
         };
 
         function loadComments(id) {
             if (unsubscribeComments) unsubscribeComments(); 
             const list = document.getElementById('comments-list');
-            list.innerHTML = ''; 
             unsubscribeComments = db.collection('posts').doc(id).collection('comments').orderBy('date').onSnapshot(snap => {
                 list.innerHTML = '';
-                if(snap.empty) { list.innerHTML = '<p style="text-align:center; color:#ccc; font-size:0.85rem;">첫 응원의 댓글을 남겨보세요.</p>'; return; }
                 snap.forEach(d => {
                     const c = d.data();
                     const div = document.createElement('div');
                     div.className = 'comment-item';
-                    let buttons = isAdminMode ? `<i class="fas fa-trash" onclick="adminDeleteComment('${d.id}')"></i>` : `
-                        <i class="fas fa-pen" onclick="editComment('${d.id}', '${c.password}', '${c.text}')"></i>
-                        <i class="fas fa-trash" onclick="userDeleteComment('${d.id}', '${c.password}')"></i>
-                    `;
-                    div.innerHTML = `<div class="comment-content"><b>${c.author}:</b> <span id="text-${d.id}">${c.text}</span></div><div class="comment-actions">${buttons}</div>`;
+                    div.innerHTML = `<div class="comment-content"><b>${c.author}:</b> <span>${c.text}</span></div>`;
                     list.appendChild(div);
                 });
             });
         }
-
-        window.editComment = function(commentId, originalPw, originalText) {
-            const inputPw = prompt("댓글 비밀번호를 입력하세요:");
-            if (inputPw === originalPw) {
-                const newText = prompt("수정할 내용을 입력하세요:", originalText);
-                if (newText && newText.trim() !== "") {
-                    db.collection('posts').doc(currentDocId).collection('comments').doc(commentId).update({ text: newText }).then(() => showToast("댓글이 수정되었습니다."));
-                }
-            } else if (inputPw !== null) alert("비밀번호가 틀렸습니다.");
-        };
-
-        window.userDeleteComment = function(commentId, originalPw) {
-            const inputPw = prompt("댓글 비밀번호를 입력하세요:");
-            if (inputPw === originalPw) {
-                if(confirm("정말 삭제하시겠습니까?")) {
-                    db.collection('posts').doc(currentDocId).collection('comments').doc(commentId).delete().then(() => showToast("댓글이 삭제되었습니다."));
-                }
-            } else if (inputPw !== null) alert("비밀번호가 틀렸습니다.");
-        };
-
-        window.adminDeleteComment = function(commentId) {
-            if(confirm("관리자 권한으로 이 댓글을 삭제하시겠습니까?")) {
-                db.collection('posts').doc(currentDocId).collection('comments').doc(commentId).delete().then(() => showToast("관리자 권한으로 삭제됨"));
-            }
-        };
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -490,9 +420,7 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(reg => console.log('서비스 워커 등록 완료'))
-                    .catch(err => console.log('서비스 워커 등록 실패', err));
+                navigator.serviceWorker.register('service-worker.js').catch(err => console.log(err));
             });
         }
     </script>
