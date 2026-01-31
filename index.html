@@ -181,6 +181,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <script>
+        // 브라우저 기본 설치 팝업 차단
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+        });
+
         // 파이어베이스 설정 (기존 소스 유지)
         const firebaseConfig = {
           apiKey: "AIzaSyA-gj2lPOdcsAm0B14d5HRFq7E2KDDXEKo",
