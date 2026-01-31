@@ -6,11 +6,11 @@
     <title>마음날씨 체크인</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ff9a9e">
+    <meta name="theme-color" content="#ffb8b8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="마음날씨">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/9376/9376483.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4814/4814268.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -197,6 +197,7 @@
         let currentDocData = null;
         let unsubscribeComments = null;
 
+        // --- PWA 설치 및 기기 감지 로직 ---
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
@@ -242,6 +243,7 @@
             }
         };
 
+        // --- 핵심 기능 로직 ---
         function sendPushNotification(title, message) {
             fetch('https://ntfy.sh/', {
                 method: 'POST',
@@ -447,9 +449,9 @@
                     const c = d.data();
                     const div = document.createElement('div');
                     div.className = 'comment-item';
-                    let buttons = isAdminMode ? `<i class="fas fa-trash" onclick="adminDeleteComment('${d.id}')"></i>` : `
-                        <i class="fas fa-pen" onclick="editComment('${d.id}', '${c.password}', '${c.text}')"></i>
-                        <i class="fas fa-trash" onclick="userDeleteComment('${d.id}', '${c.password}')"></i>
+                    let buttons = isAdminMode ? `<i class="fas fa-trash" onclick="adminDeleteComment('${d.id}')" title="관리자 삭제"></i>` : `
+                        <i class="fas fa-pen" onclick="editComment('${d.id}', '${c.password}', '${c.text}')" title="수정"></i>
+                        <i class="fas fa-trash" onclick="userDeleteComment('${d.id}', '${c.password}')" title="삭제"></i>
                     `;
                     div.innerHTML = `<div class="comment-content"><b>${c.author}:</b> <span id="text-${d.id}">${c.text}</span></div><div class="comment-actions">${buttons}</div>`;
                     list.appendChild(div);
