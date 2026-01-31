@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>마음날씨 체크인</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ff9a9e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="마음날씨">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/826/826070.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -470,6 +477,15 @@
             const t = document.getElementById('toast');
             t.textContent = msg; t.style.display = 'block';
             setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        // 서비스 워커 등록 스크립트 추가
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('서비스 워커 등록 완료'))
+                    .catch(err => console.log('서비스 워커 등록 실패', err));
+            });
         }
     </script>
 </body>
