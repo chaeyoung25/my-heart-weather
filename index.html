@@ -181,12 +181,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // 브라우저 기본 설치 팝업 차단
+        // 브라우저 기본 설치 팝업(이모티콘 팝업) 차단
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
         });
 
-        // 파이어베이스 설정 (기존 소스 유지)
         const firebaseConfig = {
           apiKey: "AIzaSyA-gj2lPOdcsAm0B14d5HRFq7E2KDDXEKo",
           authDomain: "heart-weather-1f20a.firebaseapp.com",
@@ -211,7 +210,6 @@
         let currentDocData = null;
         let unsubscribeComments = null;
 
-        // --- PWA 설치 및 기기 감지 로직 ---
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
@@ -257,7 +255,6 @@
             }
         };
 
-        // --- 핵심 기능 로직 ---
         function sendPushNotification(title, message) {
             fetch('https://ntfy.sh/', {
                 method: 'POST',
