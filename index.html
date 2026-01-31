@@ -181,11 +181,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // 브라우저 기본 설치 팝업(이모티콘 팝업) 차단
+        // 브라우저 기본 설치 팝업 차단
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
         });
 
+        // 파이어베이스 설정 (기존 소스 유지)
         const firebaseConfig = {
           apiKey: "AIzaSyA-gj2lPOdcsAm0B14d5HRFq7E2KDDXEKo",
           authDomain: "heart-weather-1f20a.firebaseapp.com",
@@ -210,6 +211,7 @@
         let currentDocData = null;
         let unsubscribeComments = null;
 
+        // --- PWA 설치 및 기기 감지 로직 ---
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
@@ -255,6 +257,28 @@
             }
         };
 
+        // --- 안내문 내용 복구 ---
+        const NOTICE_HTML = `
+            <p style="margin-bottom:15px;">당신의 마음이 잠시 쉬어갈 수 있는 곳, <b style="color:#6c5ce7;">'마음날씨 체크인'</b>에 오신 걸 환영해요.</p>
+            <div class="notice-section">
+                <h3>🌱 우리가 여기서 만나는 이유</h3>
+                <div class="notice-item"><i class="fas fa-check-circle" style="color: #6c5ce7;"></i> <span>가장 나다운 모습으로 속마음을 꺼내어보세요.</span></div>
+                <div class="notice-item"><i class="fas fa-check-circle" style="color: #6c5ce7;"></i> <span>기쁨은 나누고, 슬픔은 덜어내며 함께 걸어가요.</span></div>
+            </div>
+            <div class="notice-section">
+                <h3>💌 마음을 남기는 방법</h3>
+                <div class="notice-item"><i class="fas fa-pen" style="color: #ff9a9e;"></i> <span>별칭과 비밀번호(4자)를 입력하여 자유롭게 기록하세요.</span></div>
+                <div class="notice-item"><i class="fas fa-lock" style="color: #ff9a9e;"></i> <span>비밀번호는 본인의 글을 수정하거나 삭제할 때 꼭 필요해요!</span></div>
+            </div>
+            <div class="notice-section">
+                <h3>💬 따뜻한 댓글 문화</h3>
+                <div class="notice-item"><i class="fas fa-heart" style="color: #ff4757;"></i> <span>서로의 마음 날씨에 따스한 응원의 한마디를 보태주세요.</span></div>
+                <div class="notice-item"><i class="fas fa-shield-alt" style="color: #ff4757;"></i> <span>비방이나 상처를 주는 말은 우리 모두를 위해 삼가주세요.</span></div>
+            </div>
+            <p style="text-align:center; margin-top:20px; color:#333; font-weight:bold;">나는 오늘도, 이름 모를 당신의 하루를 진심으로 응원할게요.</p>
+        `;
+
+        // --- 핵심 기능 로직 ---
         function sendPushNotification(title, message) {
             fetch('https://ntfy.sh/', {
                 method: 'POST',
@@ -267,15 +291,6 @@
                 })
             }).catch(err => console.log("알림 전송 실패:", err));
         }
-
-        const NOTICE_HTML = `
-            <p style="margin-bottom:10px;">당신의 마음이 잠시 쉬어갈 수 있는 곳, <b style="color:#6c5ce7;">'마음날씨 체크인'</b>에 오신 걸 환영해요.</p>
-            <div class="notice-section">
-                <h3>🌱 우리가 여기서 만나는 이유</h3>
-                <div class="notice-item"><i class="fas fa-star" style="color: #f1c40f;"></i> <span>가장 나다운 모습으로 속마음을 꺼내어보세요.</span></div>
-            </div>
-            <p style="text-align:center; margin-top:20px; color:#333;">나는 오늘도, 이름 모름 당신의 하루를 진심으로 응원할게요.</p>
-        `;
 
         window.closeAllModals = function() {
             writeModal.classList.remove('show');
