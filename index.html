@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="마음날씨">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4814/4814268.png">
+    <link rel="apple-touch-icon" href="icon.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -54,7 +54,7 @@
         .modal.show { display: flex; }
         .glass-card { background: #fff; padding: 25px; border-radius: 20px; width: 100%; max-width: 420px; position: relative; margin: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         
-        /* 설치 유도 팝업 스타일 */
+        /* 설치 안내 팝업 */
         #install-popup { align-items: center; z-index: 300; }
         .install-card { text-align: center; padding: 30px 25px 15px; border: 2px solid rgba(255, 154, 158, 0.3); }
         .install-icon { font-size: 3.5rem; color: #ff9a9e; margin-bottom: 15px; }
@@ -82,6 +82,14 @@
         .hidden { display: none !important; }
         .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; z-index: 300; display: none; }
         .campaign-text { text-align: center; font-size: 0.85rem; color: #888; font-family: 'Gaegu', cursive; margin-bottom: 8px; margin-top: 5px; }
+
+        .comment-item { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 0.9rem; }
+        .comment-content { flex: 1; }
+        .comment-actions { display: flex; gap: 8px; margin-left: 10px; opacity: 0.6; }
+        .comment-actions i { cursor: pointer; font-size: 0.8rem; }
+        .comment-actions i:hover { opacity: 1; transform: scale(1.1); }
+        .fa-trash { color: #ff6b6b; }
+        .fa-pen { color: #00b894; }
 
         @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-3px);} }
         @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
@@ -173,6 +181,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <script>
+        // 파이어베이스 설정 (기존 소스 유지)
         const firebaseConfig = {
           apiKey: "AIzaSyA-gj2lPOdcsAm0B14d5HRFq7E2KDDXEKo",
           authDomain: "heart-weather-1f20a.firebaseapp.com",
@@ -316,7 +325,7 @@
             board.innerHTML = '';
             const notice = document.createElement('div');
             notice.className = "post-it color-3";
-            notice.innerHTML = `<div class="notice-tag">✨ 마음의 쉼표</div><div class="post-emoji">🌱</div><div class="post-text">마음날씨 체크인에 오신 걸 환영해요! 클릭해서 안내문을 읽어보세요.</div><div class="post-author">From. 마음날씨</div>`;
+            notice.innerHTML = `<div class="notice-tag">✨ 마음의 쉼표</div><div class="post-emoji">🌱</div><div class="post-text">마음날씨 체크인 안내...</div><div class="post-author">From. 마음날씨</div>`;
             notice.onclick = () => {
                 openModal(viewModal);
                 currentDocId = noticeId;
@@ -324,7 +333,6 @@
                 document.getElementById('view-emotion').textContent = '🌱';
                 document.getElementById('view-author').textContent = '작성자: 마음날씨';
                 document.getElementById('view-content').innerHTML = NOTICE_HTML;
-                document.getElementById('view-content').style.fontFamily = "'Noto Sans KR', sans-serif";
                 document.getElementById('delete-btn').classList.add('hidden');
                 document.getElementById('comment-section').classList.remove('hidden');
                 loadComments(noticeId);
@@ -343,7 +351,6 @@
                     document.getElementById('view-emotion').textContent = data.emotion;
                     document.getElementById('view-author').textContent = `작성자: ${data.author}`;
                     document.getElementById('view-content').textContent = data.text;
-                    document.getElementById('view-content').style.fontFamily = "'Gaegu', cursive";
                     document.getElementById('delete-btn').classList.remove('hidden');
                     document.getElementById('comment-section').classList.remove('hidden');
                     if(isAdminMode) {
